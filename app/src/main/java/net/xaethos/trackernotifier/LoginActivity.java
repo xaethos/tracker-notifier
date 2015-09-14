@@ -3,6 +3,7 @@ package net.xaethos.trackernotifier;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.app.Activity;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Base64;
@@ -14,15 +15,13 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import net.xaethos.trackernotifier.api.UserApi;
-import net.xaethos.trackernotifier.models.Person;
+import net.xaethos.trackernotifier.api.TrackerClient;
+import net.xaethos.trackernotifier.models.Me;
+import net.xaethos.trackernotifier.subscribers.ErrorToastSubscriber;
+import net.xaethos.trackernotifier.utils.PrefUtils;
 
-import retrofit.MoshiConverterFactory;
-import retrofit.Retrofit;
-import retrofit.RxJavaCallAdapterFactory;
 import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
-import rx.functions.Action1;
 import rx.schedulers.Schedulers;
 
 /**
@@ -112,33 +111,32 @@ public class LoginActivity extends Activity {
         // perform the user login attempt.
         showProgress(true);
 
-        Retrofit retrofit =
-                new Retrofit.Builder().baseUrl("https://www.pivotaltracker.com/services/v5/")
-                        .addCallAdapterFactory(RxJavaCallAdapterFactory.create())
-                        .addConverterFactory(MoshiConverterFactory.create())
-                        .build();
-        UserApi service = retrofit.create(UserApi.class);
-
+        final SharedPreferences prefs = PrefUtils.getPrefs(this);
         String credentials = accountName + ":" + password;
         String auth = "Basic " + Base64.encodeToString(credentials.getBytes(), Base64.NO_WRAP);
 
-        mLoginSubscription = service.me(auth)
+        mLoginSubscription = new TrackerClient().getUserApi()
+                .login(auth)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Action1<Person>() {
+                .subscribe(new ErrorToastSubscriber<Me>(this) {
                     @Override
-                    public void call(Person user) {
+                    public void onNext(Me user) {
+                        showProgress(false);
                         Toast.makeText(LoginActivity.this,
                                 "Welcome back " + user.name,
                                 Toast.LENGTH_LONG).show();
-                        showProgress(false);
+
+                        if (prefs.edit().putString(PrefUtils.PREF_TOKEN, user.api_token).commit()) {
+                            setResult(RESULT_OK);
+                            finish();
+                        }
                     }
-                }, new Action1<Throwable>() {
+
                     @Override
-                    public void call(Throwable error) {
-                        Toast.makeText(LoginActivity.this, error.getMessage(), Toast.LENGTH_LONG)
-                                .show();
+                    public void onError(Throwable error) {
                         showProgress(false);
+                        super.onError(error);
                     }
                 });
     }

@@ -8,5 +8,8 @@ import rx.Observable;
 
 public interface UserApi {
     @GET("me")
-    Observable<Me> me(@Header("Authorization") String authorization);
+    Observable<Me> login(@Header("Authorization") String authorization);
+
+    @GET("me")
+    Observable<Me> me(@Header("X-TrackerToken") String token);
 }
