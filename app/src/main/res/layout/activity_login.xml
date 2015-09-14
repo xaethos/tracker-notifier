@@ -29,10 +29,10 @@
             android:orientation="vertical">
 
             <EditText
-                android:id="@+id/input_email"
+                android:id="@+id/input_account"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="@string/prompt_email"
+                android:hint="@string/prompt_account"
                 android:imeOptions="actionNext"
                 android:inputType="textEmailAddress"
                 android:maxLines="1"

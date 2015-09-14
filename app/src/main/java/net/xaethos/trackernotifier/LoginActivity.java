@@ -10,17 +10,16 @@ import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.inputmethod.EditorInfo;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import net.xaethos.trackernotifier.api.UserApi;
+import net.xaethos.trackernotifier.models.Person;
+
 import retrofit.MoshiConverterFactory;
 import retrofit.Retrofit;
 import retrofit.RxJavaCallAdapterFactory;
-import retrofit.http.GET;
-import retrofit.http.Header;
-import rx.Observable;
 import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.functions.Action1;
@@ -37,7 +36,7 @@ public class LoginActivity extends Activity {
     private Subscription mLoginSubscription;
 
     // UI references.
-    private EditText mEmailView;
+    private EditText mAccountNameView;
     private EditText mPasswordView;
     private View mProgressView;
     private View mLoginFormView;
@@ -48,7 +47,7 @@ public class LoginActivity extends Activity {
         setContentView(R.layout.activity_login);
 
         // Set up the login form.
-        mEmailView = (EditText) findViewById(R.id.input_email);
+        mAccountNameView = (EditText) findViewById(R.id.input_account);
         mPasswordView = (EditText) findViewById(R.id.input_password);
         mPasswordView.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
@@ -61,8 +60,7 @@ public class LoginActivity extends Activity {
             }
         });
 
-        Button mEmailSignInButton = (Button) findViewById(R.id.btn_sign_in);
-        mEmailSignInButton.setOnClickListener(new OnClickListener() {
+        findViewById(R.id.btn_sign_in).setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View view) {
                 attemptLogin();
@@ -84,28 +82,23 @@ public class LoginActivity extends Activity {
         }
 
         // Reset errors.
-        mEmailView.setError(null);
+        mAccountNameView.setError(null);
         mPasswordView.setError(null);
 
         // Store values at the time of the login attempt.
-        String email = mEmailView.getText().toString();
+        String accountName = mAccountNameView.getText().toString();
         String password = mPasswordView.getText().toString();
 
         View errorField = null;
 
-        // Check for a valid password, if the user entered one.
         if (TextUtils.isEmpty(password)) {
             mPasswordView.setError(getString(R.string.error_field_required));
             errorField = mPasswordView;
         }
 
-        // Check for a valid email address.
-        if (TextUtils.isEmpty(email)) {
-            mEmailView.setError(getString(R.string.error_field_required));
-            errorField = mEmailView;
-        } else if (!isEmailValid(email)) {
-            mEmailView.setError(getString(R.string.error_invalid_email));
-            errorField = mEmailView;
+        if (TextUtils.isEmpty(accountName)) {
+            mAccountNameView.setError(getString(R.string.error_field_required));
+            errorField = mAccountNameView;
         }
 
         if (errorField != null) {
@@ -124,17 +117,17 @@ public class LoginActivity extends Activity {
                         .addCallAdapterFactory(RxJavaCallAdapterFactory.create())
                         .addConverterFactory(MoshiConverterFactory.create())
                         .build();
-        TrackerService service = retrofit.create(TrackerService.class);
+        UserApi service = retrofit.create(UserApi.class);
 
-        String credentials = email + ":" + password;
+        String credentials = accountName + ":" + password;
         String auth = "Basic " + Base64.encodeToString(credentials.getBytes(), Base64.NO_WRAP);
 
         mLoginSubscription = service.me(auth)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Action1<User>() {
+                .subscribe(new Action1<Person>() {
                     @Override
-                    public void call(User user) {
+                    public void call(Person user) {
                         Toast.makeText(LoginActivity.this,
                                 "Welcome back " + user.name,
                                 Toast.LENGTH_LONG).show();
@@ -148,10 +141,6 @@ public class LoginActivity extends Activity {
                         showProgress(false);
                     }
                 });
-    }
-
-    private boolean isEmailValid(String email) {
-        return email.contains("@");
     }
 
     /**
@@ -184,18 +173,4 @@ public class LoginActivity extends Activity {
                 });
     }
 
-    public static class User {
-        long id;
-        String api_token;
-        String email;
-        String name;
-        String initials;
-    }
-
-    public interface TrackerService {
-        @GET("me")
-        Observable<User> me(@Header("Authorization") String authorization);
-    }
-
 }
-
