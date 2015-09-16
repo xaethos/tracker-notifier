@@ -14,4 +14,14 @@ public class Story {
      */
     public String name;
 
+    @Override
+    public boolean equals(Object o) {
+        return (o instanceof Story) && ((Story) o).id == id;
+    }
+
+    @Override
+    public int hashCode() {
+        return Long.valueOf(id).hashCode();
+    }
+
 }

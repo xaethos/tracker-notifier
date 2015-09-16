@@ -19,10 +19,14 @@ import net.xaethos.trackernotifier.MainActivity;
 import net.xaethos.trackernotifier.R;
 import net.xaethos.trackernotifier.api.TrackerClient;
 import net.xaethos.trackernotifier.models.Notification;
+import net.xaethos.trackernotifier.models.Project;
+import net.xaethos.trackernotifier.models.Story;
 import net.xaethos.trackernotifier.subscribers.ErrorToastSubscriber;
 
-import java.util.Collections;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
@@ -88,17 +92,13 @@ public class NotificationsFragment extends Fragment {
 
     private static class NotificationItemViewHolder extends RecyclerView.ViewHolder {
 
-        public final TextView textProjectName;
-        public final TextView textStoryName;
-        public final TextView textNotifMessage;
-        public final TextView textNotifContext;
+        public final TextView title;
+        public final TextView summary;
 
         public NotificationItemViewHolder(View itemView) {
             super(itemView);
-            textProjectName = (TextView) itemView.findViewById(R.id.text_project_name);
-            textStoryName = (TextView) itemView.findViewById(R.id.text_story_name);
-            textNotifMessage = (TextView) itemView.findViewById(R.id.text_notif_message);
-            textNotifContext = (TextView) itemView.findViewById(R.id.text_notif_context);
+            title = (TextView) itemView.findViewById(R.id.title);
+            summary = (TextView) itemView.findViewById(R.id.summary);
         }
     }
 
@@ -106,45 +106,95 @@ public class NotificationsFragment extends Fragment {
             extends RecyclerView.Adapter<NotificationItemViewHolder> {
 
         private final LayoutInflater mLayoutInflater;
-        private List<Notification> mNotifications;
+        private ArrayList<Object> mData;
 
         private NotificationsAdapter(Context context) {
             mLayoutInflater = LayoutInflater.from(context);
-            mNotifications = Collections.emptyList();
+            mData = new ArrayList<>();
             setHasStableIds(true);
         }
 
         @Override
         public NotificationItemViewHolder onCreateViewHolder(
                 ViewGroup parent, int viewType) {
-            final View itemView =
-                    mLayoutInflater.inflate(R.layout.item_notification, parent, false);
+            final View itemView = mLayoutInflater.inflate(viewType, parent, false);
             return new NotificationItemViewHolder(itemView);
         }
 
         @Override
         public void onBindViewHolder(
                 NotificationItemViewHolder holder, int position) {
-            Notification notification = mNotifications.get(position);
-            holder.textProjectName.setText(notification.project.name);
-            holder.textStoryName.setText(notification.story.name);
-            holder.textNotifMessage.setText(notification.message);
-            holder.textNotifContext.setText(notification.context);
+            Object item = mData.get(position);
+
+            if (item instanceof Notification) {
+                holder.title.setText(((Notification) item).message);
+                holder.summary.setText(((Notification) item).context);
+            } else if (item instanceof Story) {
+                holder.title.setText(((Story) item).name);
+            } else if (item instanceof Project) {
+                holder.title.setText(((Project) item).name);
+            }
         }
 
         @Override
         public long getItemId(int position) {
-            return mNotifications.get(position).id;
+            Object item = mData.get(position);
+            if (item instanceof Notification) return ((Notification) item).id;
+            if (item instanceof Story) return ((Story) item).id;
+            if (item instanceof Project) return ((Project) item).id;
+            return 0;
         }
 
         @Override
         public int getItemCount() {
-            return mNotifications.size();
+            return mData.size();
+        }
+
+        @Override
+        public int getItemViewType(int position) {
+            Object item = mData.get(position);
+            if (item instanceof Notification) return R.layout.item_notification;
+            if (item instanceof Story) return R.layout.item_story;
+            if (item instanceof Project) return R.layout.item_project;
+            return super.getItemViewType(position);
         }
 
         public void setNotifications(List<Notification> notifications) {
-            if (notifications == null) notifications = Collections.emptyList();
-            mNotifications = notifications;
+            Map<Project, Map<Story, List<Notification>>> projectMap = new LinkedHashMap<>();
+
+            int count = 0;
+            for (Notification notification : notifications) {
+                count++; // one notification item
+
+                Map<Story, List<Notification>> storyMap = projectMap.get(notification.project);
+                if (storyMap == null) {
+                    count++; // one project header
+                    storyMap = new LinkedHashMap<>();
+                    projectMap.put(notification.project, storyMap);
+                }
+
+                List<Notification> storyNotifications = storyMap.get(notification.story);
+                if (storyNotifications == null) {
+                    count++; // one story header
+                    storyNotifications = new ArrayList<>();
+                    storyMap.put(notification.story, storyNotifications);
+                }
+
+                storyNotifications.add(notification);
+            }
+
+            ArrayList<Object> data = new ArrayList<>(count);
+            for (Map.Entry<Project, Map<Story, List<Notification>>> projectEntry : projectMap
+                    .entrySet()) {
+                data.add(projectEntry.getKey());
+                for (Map.Entry<Story, List<Notification>> storyEntry : projectEntry.getValue()
+                        .entrySet()) {
+                    data.add(storyEntry.getKey());
+                    data.addAll(storyEntry.getValue());
+                }
+            }
+
+            mData = data;
             notifyDataSetChanged();
         }
     }

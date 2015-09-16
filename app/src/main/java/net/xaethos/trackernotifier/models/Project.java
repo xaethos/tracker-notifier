@@ -23,4 +23,13 @@ public class Project {
      */
     public Long version;
 
+    @Override
+    public boolean equals(Object o) {
+        return (o instanceof Project) && ((Project) o).id == id;
+    }
+
+    @Override
+    public int hashCode() {
+        return Long.valueOf(id).hashCode();
+    }
 }

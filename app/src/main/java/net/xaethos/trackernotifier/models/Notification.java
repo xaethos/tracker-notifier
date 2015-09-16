@@ -56,4 +56,14 @@ public class Notification {
      */
     public Story story;
 
+    @Override
+    public boolean equals(Object o) {
+        return (o instanceof Notification) && ((Notification) o).id == id;
+    }
+
+    @Override
+    public int hashCode() {
+        return Long.valueOf(id).hashCode();
+    }
+
 }
