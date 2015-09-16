@@ -5,14 +5,14 @@ public class Project {
     /**
      * Database id of the project. This field is read only. This field is always returned.
      */
-    long id;
+    public long id;
 
     /**
      * The name of the project. This field is required on create.
      * <p/>
      * <b>Required On Create</b>
      */
-    String name;
+    public String name;
 
     /**
      * A counter that is incremented each time something is changed within a project. The project
@@ -21,6 +21,6 @@ public class Project {
      * client's local copy of the project (if it stores one) to re-synchronize it with the server
      * . This field is read only.
      */
-    Long version;
+    public Long version;
 
 }

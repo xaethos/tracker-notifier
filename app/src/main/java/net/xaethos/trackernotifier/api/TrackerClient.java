@@ -7,6 +7,7 @@ import retrofit.RxJavaCallAdapterFactory;
 public class TrackerClient {
 
     private final UserApi mUserApi;
+    private final NotificationsApi mNotificationsApi;
 
     public TrackerClient() {
         Retrofit retrofit =
@@ -16,9 +17,14 @@ public class TrackerClient {
                         .build();
 
         mUserApi = retrofit.create(UserApi.class);
+        mNotificationsApi = retrofit.create(NotificationsApi.class);
     }
 
     public UserApi getUserApi() {
         return mUserApi;
+    }
+
+    public NotificationsApi getNotificationsApi() {
+        return mNotificationsApi;
     }
 }

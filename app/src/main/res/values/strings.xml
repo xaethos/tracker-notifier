@@ -1,6 +1,8 @@
 <resources>
     <string name="app_name">Tracker Notifier</string>
-    <string name="title_activity_profile">ProfileActivity</string>
+
+    <string name="title_activity_profile">Profile</string>
+    <string name="title_activity_login">Login</string>
 
     <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
