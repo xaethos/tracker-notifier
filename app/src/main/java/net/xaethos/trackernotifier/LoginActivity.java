@@ -1,7 +1,5 @@
 package net.xaethos.trackernotifier;
 
-import android.animation.Animator;
-import android.animation.AnimatorListenerAdapter;
 import android.app.Activity;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -15,6 +13,7 @@ import net.xaethos.trackernotifier.api.TrackerClient;
 import net.xaethos.trackernotifier.models.Me;
 import net.xaethos.trackernotifier.subscribers.ErrorToastSubscriber;
 import net.xaethos.trackernotifier.utils.PrefUtils;
+import net.xaethos.trackernotifier.utils.ViewUtils;
 
 import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
@@ -130,30 +129,11 @@ public class LoginActivity extends Activity {
      * Shows the progress UI and hides the login form.
      */
     public void showProgress(final boolean show) {
-        // Fade-in the progress spinner.
-        int shortAnimTime = getResources().getInteger(android.R.integer.config_shortAnimTime);
-
-        mLoginFormView.setVisibility(show ? View.GONE : View.VISIBLE);
-        mLoginFormView.animate()
-                .setDuration(shortAnimTime)
-                .alpha(show ? 0 : 1)
-                .setListener(new AnimatorListenerAdapter() {
-                    @Override
-                    public void onAnimationEnd(Animator animation) {
-                        mLoginFormView.setVisibility(show ? View.GONE : View.VISIBLE);
-                    }
-                });
-
-        mProgressView.setVisibility(show ? View.VISIBLE : View.GONE);
-        mProgressView.animate()
-                .setDuration(shortAnimTime)
-                .alpha(show ? 1 : 0)
-                .setListener(new AnimatorListenerAdapter() {
-                    @Override
-                    public void onAnimationEnd(Animator animation) {
-                        mProgressView.setVisibility(show ? View.VISIBLE : View.GONE);
-                    }
-                });
+        if (show) {
+            ViewUtils.switchVisible(mProgressView, mLoginFormView);
+        } else {
+            ViewUtils.switchVisible(mLoginFormView, mProgressView);
+        }
     }
 
 }
