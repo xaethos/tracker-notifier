@@ -51,10 +51,15 @@ public class Notification {
 
     /**
      * The story this notification is about. This field is read only. In API responses, {@link
-     * #story_id}
-     * may be present instead.
+     * #story_id} may be present instead.
      */
     public Story story;
+
+    /**
+     * Time notification was read.
+     * type: datetime
+     */
+    public Object read_at;
 
     @Override
     public boolean equals(Object o) {

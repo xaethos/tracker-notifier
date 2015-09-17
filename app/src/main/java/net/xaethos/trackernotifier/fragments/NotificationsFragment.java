@@ -10,6 +10,8 @@ import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.helper.ItemTouchHelper;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -28,14 +30,17 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import rx.Subscriber;
 import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.schedulers.Schedulers;
 
 public class NotificationsFragment extends Fragment {
 
-    NotificationsAdapter mAdapter;
     MainActivity mMainActivity;
+    NotificationsAdapter mAdapter;
+    TrackerClient mApiClient;
+
     private Subscription mSubscription;
 
     @Override
@@ -51,6 +56,12 @@ public class NotificationsFragment extends Fragment {
     }
 
     @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        mApiClient = new TrackerClient();
+    }
+
+    @Override
     public View onCreateView(
             LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         Context context = getContext();
@@ -61,6 +72,49 @@ public class NotificationsFragment extends Fragment {
         recyclerView.setLayoutManager(new LinearLayoutManager(context));
         recyclerView.addItemDecoration(new DividerDecorator(context));
         recyclerView.setAdapter(mAdapter);
+
+        new ItemTouchHelper(new ItemTouchHelper.SimpleCallback(0,
+                ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT) {
+
+            @Override
+            public boolean onMove(
+                    RecyclerView recyclerView,
+                    RecyclerView.ViewHolder viewHolder,
+                    RecyclerView.ViewHolder target) {
+                return false;
+            }
+
+            @Override
+            public void onSwiped(RecyclerView.ViewHolder viewHolder, int swipeDir) {
+                //Remove swiped item from list and notify the RecyclerView
+                int position = viewHolder.getAdapterPosition();
+                Object item = mAdapter.getItem(position);
+                if (item instanceof Notification) {
+                    final Notification notification = (Notification) item;
+                    Notification readNotification = new Notification();
+                    readNotification.read_at = System.currentTimeMillis();
+                    mAdapter.removeItem(position);
+                    mApiClient.notifications()
+                            .markRead(mMainActivity.getToken(), notification.id, readNotification)
+                            .subscribe(new Subscriber<Notification>() {
+                                @Override
+                                public void onCompleted() {
+                                    Log.d("XAE", "onCompleted");
+                                }
+
+                                @Override
+                                public void onError(Throwable e) {
+                                    Log.d("XAE", "markRead error", e);
+                                }
+
+                                @Override
+                                public void onNext(Notification notification) {
+                                    Log.d("XAE", "markRead success: " + notification.read_at);
+                                }
+                            });
+                }
+            }
+        }).attachToRecyclerView(recyclerView);
 
         return recyclerView;
     }
@@ -78,8 +132,8 @@ public class NotificationsFragment extends Fragment {
     }
 
     private Subscription subscribeAdapter(final NotificationsAdapter adapter) {
-        return new TrackerClient().getNotificationsApi()
-                .notifications(mMainActivity.getToken())
+        return mApiClient.notifications()
+                .get(mMainActivity.getToken())
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new ErrorToastSubscriber<List<Notification>>(getContext()) {
@@ -136,6 +190,10 @@ public class NotificationsFragment extends Fragment {
             }
         }
 
+        public Object getItem(int position) {
+            return mData.get(position);
+        }
+
         @Override
         public long getItemId(int position) {
             Object item = mData.get(position);
@@ -164,6 +222,7 @@ public class NotificationsFragment extends Fragment {
 
             int count = 0;
             for (Notification notification : notifications) {
+                if (notification.read_at != null) continue; // Skip notifications marked as read
                 count++; // one notification item
 
                 Map<Story, List<Notification>> storyMap = projectMap.get(notification.project);
@@ -196,6 +255,11 @@ public class NotificationsFragment extends Fragment {
 
             mData = data;
             notifyDataSetChanged();
+        }
+
+        public void removeItem(int position) {
+            mData.remove(position);
+            notifyItemRemoved(position);
         }
     }
 

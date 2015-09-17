@@ -115,7 +115,7 @@ public class LoginActivity extends Activity {
         String credentials = accountName + ":" + password;
         String auth = "Basic " + Base64.encodeToString(credentials.getBytes(), Base64.NO_WRAP);
 
-        mLoginSubscription = new TrackerClient().getUserApi()
+        mLoginSubscription = new TrackerClient().user()
                 .login(auth)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())

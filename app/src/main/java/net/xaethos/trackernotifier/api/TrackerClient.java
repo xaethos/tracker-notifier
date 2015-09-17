@@ -20,11 +20,11 @@ public class TrackerClient {
         mNotificationsApi = retrofit.create(NotificationsApi.class);
     }
 
-    public UserApi getUserApi() {
+    public UserApi user() {
         return mUserApi;
     }
 
-    public NotificationsApi getNotificationsApi() {
+    public NotificationsApi notifications() {
         return mNotificationsApi;
     }
 }

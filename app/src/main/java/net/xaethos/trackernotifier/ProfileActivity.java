@@ -84,7 +84,7 @@ public class ProfileActivity extends AppCompatActivity {
         final TextView initialsView = (TextView) findViewById(R.id.text_initials);
 
         TrackerClient trackerClient = new TrackerClient();
-        return trackerClient.getUserApi()
+        return trackerClient.user()
                 .me(mToken)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
