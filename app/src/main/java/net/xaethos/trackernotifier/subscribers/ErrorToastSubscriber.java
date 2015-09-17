@@ -4,7 +4,6 @@ import android.content.Context;
 import android.widget.Toast;
 
 import rx.Subscriber;
-import rx.functions.Action0;
 import rx.subscriptions.Subscriptions;
 
 public abstract class ErrorToastSubscriber<T> extends Subscriber<T> {
@@ -13,12 +12,7 @@ public abstract class ErrorToastSubscriber<T> extends Subscriber<T> {
 
     public ErrorToastSubscriber(Context context) {
         mContext = context;
-        add(Subscriptions.create(new Action0() {
-            @Override
-            public void call() {
-                mContext = null;
-            }
-        }));
+        add(Subscriptions.create(() -> mContext = null));
     }
 
     @Override

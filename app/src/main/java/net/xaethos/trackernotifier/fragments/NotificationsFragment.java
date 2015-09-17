@@ -29,7 +29,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import rx.Subscriber;
 import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.schedulers.Schedulers;
@@ -89,23 +88,10 @@ public class NotificationsFragment extends Fragment {
                 Object item = mAdapter.getItem(position);
                 if (item instanceof Notification) {
                     mAdapter.removeItem(position);
-                    mApiClient.notifications().markRead(((Notification) item).id)
-                            .subscribe(new Subscriber<Notification>() {
-                                @Override
-                                public void onCompleted() {
-                                    Log.d("XAE", "onCompleted");
-                                }
-
-                                @Override
-                                public void onError(Throwable e) {
-                                    Log.d("XAE", "markRead error", e);
-                                }
-
-                                @Override
-                                public void onNext(Notification notification) {
-                                    Log.d("XAE", "markRead success: " + notification.read_at);
-                                }
-                            });
+                    mApiClient.notifications()
+                            .markRead(((Notification) item).id)
+                            .subscribe(notif -> Log.d("XAE", "markRead success: " + notif.read_at),
+                                    error -> Log.d("XAE", "markRead error", error));
                 }
             }
         }).attachToRecyclerView(recyclerView);
