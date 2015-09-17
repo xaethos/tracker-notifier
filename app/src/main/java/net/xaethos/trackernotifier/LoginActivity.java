@@ -6,7 +6,6 @@ import android.app.Activity;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.util.Base64;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -112,11 +111,8 @@ public class LoginActivity extends Activity {
         showProgress(true);
 
         final SharedPreferences prefs = PrefUtils.getPrefs(this);
-        String credentials = accountName + ":" + password;
-        String auth = "Basic " + Base64.encodeToString(credentials.getBytes(), Base64.NO_WRAP);
 
-        mLoginSubscription = new TrackerClient().user()
-                .login(auth)
+        mLoginSubscription = TrackerClient.getInstance().user().login(accountName, password)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new ErrorToastSubscriber<Me>(this) {

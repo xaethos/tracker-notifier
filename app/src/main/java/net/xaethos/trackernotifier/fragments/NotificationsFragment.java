@@ -1,6 +1,5 @@
 package net.xaethos.trackernotifier.fragments;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Canvas;
@@ -44,9 +43,9 @@ public class NotificationsFragment extends Fragment {
     private Subscription mSubscription;
 
     @Override
-    public void onAttach(Activity activity) {
-        super.onAttach(activity);
-        mMainActivity = (MainActivity) activity;
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        mMainActivity = (MainActivity) context;
     }
 
     @Override
@@ -58,7 +57,7 @@ public class NotificationsFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mApiClient = new TrackerClient();
+        mApiClient = TrackerClient.getInstance();
     }
 
     @Override
@@ -86,16 +85,11 @@ public class NotificationsFragment extends Fragment {
 
             @Override
             public void onSwiped(RecyclerView.ViewHolder viewHolder, int swipeDir) {
-                //Remove swiped item from list and notify the RecyclerView
                 int position = viewHolder.getAdapterPosition();
                 Object item = mAdapter.getItem(position);
                 if (item instanceof Notification) {
-                    final Notification notification = (Notification) item;
-                    Notification readNotification = new Notification();
-                    readNotification.read_at = System.currentTimeMillis();
                     mAdapter.removeItem(position);
-                    mApiClient.notifications()
-                            .markRead(mMainActivity.getToken(), notification.id, readNotification)
+                    mApiClient.notifications().markRead(((Notification) item).id)
                             .subscribe(new Subscriber<Notification>() {
                                 @Override
                                 public void onCompleted() {
@@ -120,6 +114,12 @@ public class NotificationsFragment extends Fragment {
     }
 
     @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+        mApiClient.setToken(mMainActivity.getToken());
+    }
+
+    @Override
     public void onResume() {
         super.onResume();
         mSubscription = subscribeAdapter(mAdapter);
@@ -132,8 +132,7 @@ public class NotificationsFragment extends Fragment {
     }
 
     private Subscription subscribeAdapter(final NotificationsAdapter adapter) {
-        return mApiClient.notifications()
-                .get(mMainActivity.getToken())
+        return mApiClient.notifications().get()
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new ErrorToastSubscriber<List<Notification>>(getContext()) {

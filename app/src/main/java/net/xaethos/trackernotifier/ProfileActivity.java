@@ -20,7 +20,7 @@ public class ProfileActivity extends AppCompatActivity {
 
     private static final int REQUEST_LOGIN = 1;
 
-    private String mToken;
+    private TrackerClient mClient;
     private Subscription mSubscription;
 
     @Override
@@ -28,11 +28,13 @@ public class ProfileActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_profile);
 
-        mToken = PrefUtils.getPrefs(this).getString(PrefUtils.PREF_TOKEN, null);
+        mClient = TrackerClient.getInstance();
+        String token = PrefUtils.getPrefs(this).getString(PrefUtils.PREF_TOKEN, null);
 
-        if (mToken == null) {
+        if (token == null) {
             startActivityForResult(new Intent(this, LoginActivity.class), REQUEST_LOGIN);
         } else {
+            mClient.setToken(token);
             mSubscription = subscribeViews();
         }
     }
@@ -50,8 +52,8 @@ public class ProfileActivity extends AppCompatActivity {
                 finish();
                 return;
             }
-            mToken = PrefUtils.getPrefs(this).getString(PrefUtils.PREF_TOKEN, null);
-            subscribeViews();
+            mClient.setToken(PrefUtils.getPrefs(this).getString(PrefUtils.PREF_TOKEN, null));
+            mSubscription = subscribeViews();
         } else {
             super.onActivityResult(requestCode, resultCode, data);
         }
@@ -83,9 +85,8 @@ public class ProfileActivity extends AppCompatActivity {
         final TextView nameView = (TextView) findViewById(R.id.text_name);
         final TextView initialsView = (TextView) findViewById(R.id.text_initials);
 
-        TrackerClient trackerClient = new TrackerClient();
-        return trackerClient.user()
-                .me(mToken)
+        TrackerClient trackerClient = TrackerClient.getInstance();
+        return trackerClient.user().get()
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new ErrorToastSubscriber<Me>(this) {
