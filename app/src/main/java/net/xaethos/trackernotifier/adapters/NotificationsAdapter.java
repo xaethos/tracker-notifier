@@ -3,7 +3,6 @@ package net.xaethos.trackernotifier.adapters;
 import android.content.Context;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
-import android.view.View;
 import android.view.ViewGroup;
 
 import net.xaethos.trackernotifier.R;
@@ -17,7 +16,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-public class NotificationsAdapter extends RecyclerView.Adapter<NotificationItemViewHolder> {
+public class NotificationsAdapter extends RecyclerView.Adapter<ResourceViewHolder> {
 
     private final LayoutInflater mLayoutInflater;
     private ArrayList<Resource> mData;
@@ -29,26 +28,13 @@ public class NotificationsAdapter extends RecyclerView.Adapter<NotificationItemV
     }
 
     @Override
-    public NotificationItemViewHolder onCreateViewHolder(
-            ViewGroup parent, int viewType) {
-        final View itemView = mLayoutInflater.inflate(viewType, parent, false);
-        return new NotificationItemViewHolder(itemView);
+    public ResourceViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+        return new ResourceViewHolder(mLayoutInflater.inflate(viewType, parent, false));
     }
 
     @Override
-    public void onBindViewHolder(
-            NotificationItemViewHolder holder, int position) {
-        Resource item = mData.get(position);
-
-        if (item instanceof Notification) {
-            holder.title.setText(((Notification) item).message);
-            holder.summary.setText(((Notification) item).context);
-            holder.initials.setText(((Notification) item).performer.initials);
-        } else if (item instanceof Story) {
-            holder.title.setText(((Story) item).name);
-        } else if (item instanceof Project) {
-            holder.title.setText(((Project) item).name);
-        }
+    public void onBindViewHolder(ResourceViewHolder holder, int position) {
+        holder.bind(mData.get(position));
     }
 
     public Resource getItem(int position) {
