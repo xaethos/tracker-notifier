@@ -1,11 +1,6 @@
 package net.xaethos.trackernotifier.models;
 
-public class Notification {
-
-    /**
-     * Database id of the notification. This field is read only.
-     */
-    public long id;
+public class Notification extends Resource {
 
     /**
      * Message of the notification. This field is read only.
@@ -60,15 +55,5 @@ public class Notification {
      * type: datetime
      */
     public Object read_at;
-
-    @Override
-    public boolean equals(Object o) {
-        return (o instanceof Notification) && ((Notification) o).id == id;
-    }
-
-    @Override
-    public int hashCode() {
-        return Long.valueOf(id).hashCode();
-    }
 
 }
