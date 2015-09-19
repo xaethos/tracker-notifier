@@ -9,6 +9,7 @@ import android.view.ViewGroup;
 import net.xaethos.trackernotifier.R;
 import net.xaethos.trackernotifier.models.Notification;
 import net.xaethos.trackernotifier.models.Project;
+import net.xaethos.trackernotifier.models.Resource;
 import net.xaethos.trackernotifier.models.Story;
 
 import java.util.ArrayList;
@@ -16,11 +17,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-public class NotificationsAdapter
-        extends RecyclerView.Adapter<NotificationItemViewHolder> {
+public class NotificationsAdapter extends RecyclerView.Adapter<NotificationItemViewHolder> {
 
     private final LayoutInflater mLayoutInflater;
-    private ArrayList<Object> mData;
+    private ArrayList<Resource> mData;
 
     public NotificationsAdapter(Context context) {
         mLayoutInflater = LayoutInflater.from(context);
@@ -38,7 +38,7 @@ public class NotificationsAdapter
     @Override
     public void onBindViewHolder(
             NotificationItemViewHolder holder, int position) {
-        Object item = mData.get(position);
+        Resource item = mData.get(position);
 
         if (item instanceof Notification) {
             holder.title.setText(((Notification) item).message);
@@ -51,17 +51,13 @@ public class NotificationsAdapter
         }
     }
 
-    public Object getItem(int position) {
+    public Resource getItem(int position) {
         return mData.get(position);
     }
 
     @Override
     public long getItemId(int position) {
-        Object item = mData.get(position);
-        if (item instanceof Notification) return ((Notification) item).id;
-        if (item instanceof Story) return ((Story) item).id;
-        if (item instanceof Project) return ((Project) item).id;
-        return 0;
+        return mData.get(position).id;
     }
 
     @Override
@@ -71,7 +67,7 @@ public class NotificationsAdapter
 
     @Override
     public int getItemViewType(int position) {
-        Object item = mData.get(position);
+        Resource item = mData.get(position);
         if (item instanceof Notification) return R.layout.item_notification;
         if (item instanceof Story) return R.layout.item_story;
         if (item instanceof Project) return R.layout.item_project;
@@ -103,8 +99,9 @@ public class NotificationsAdapter
             storyNotifications.add(notification);
         }
 
-        ArrayList<Object> data = new ArrayList<>(count);
-        for (Map.Entry<Project, Map<Story, List<Notification>>> projectEntry : projectMap.entrySet()) {
+        ArrayList<Resource> data = new ArrayList<>(count);
+        for (Map.Entry<Project, Map<Story, List<Notification>>> projectEntry : projectMap
+                .entrySet()) {
             data.add(projectEntry.getKey());
             for (Map.Entry<Story, List<Notification>> storyEntry : projectEntry.getValue()
                     .entrySet()) {
