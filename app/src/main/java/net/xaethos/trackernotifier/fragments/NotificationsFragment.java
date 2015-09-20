@@ -15,12 +15,14 @@ import net.xaethos.trackernotifier.MainActivity;
 import net.xaethos.trackernotifier.R;
 import net.xaethos.trackernotifier.adapters.DividerDecorator;
 import net.xaethos.trackernotifier.adapters.NotificationsAdapter;
+import net.xaethos.trackernotifier.adapters.NotificationsDataSource;
 import net.xaethos.trackernotifier.api.TrackerClient;
 import net.xaethos.trackernotifier.models.Notification;
 import net.xaethos.trackernotifier.subscribers.ErrorToastSubscriber;
 
 import java.util.List;
 
+import rx.Observable;
 import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.schedulers.Schedulers;
@@ -28,7 +30,7 @@ import rx.schedulers.Schedulers;
 public class NotificationsFragment extends Fragment {
 
     MainActivity mMainActivity;
-    NotificationsAdapter mAdapter;
+    NotificationsDataSource mDataSource;
     TrackerClient mApiClient;
 
     private Subscription mSubscription;
@@ -54,14 +56,15 @@ public class NotificationsFragment extends Fragment {
     @Override
     public View onCreateView(
             LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        Context context = getContext();
-        mAdapter = new NotificationsAdapter(context);
+        NotificationsAdapter adapter = NotificationsAdapter.create();
+        mDataSource = adapter.getDataSource();
 
+        Context context = container.getContext();
         RecyclerView recyclerView =
                 (RecyclerView) inflater.inflate(R.layout.fragment_notifications, container, false);
         recyclerView.setLayoutManager(new LinearLayoutManager(context));
         recyclerView.addItemDecoration(new DividerDecorator(context));
-        recyclerView.setAdapter(mAdapter);
+        recyclerView.setAdapter(adapter);
 
         new ItemTouchHelper(new ItemTouchHelper.SimpleCallback(0,
                 ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT) {
@@ -77,13 +80,16 @@ public class NotificationsFragment extends Fragment {
             @Override
             public void onSwiped(RecyclerView.ViewHolder viewHolder, int swipeDir) {
                 int position = viewHolder.getAdapterPosition();
-                Object item = mAdapter.getItem(position);
+                Object item = mDataSource.getResource(position);
                 if (item instanceof Notification) {
-                    mAdapter.removeItem(position);
-                    mApiClient.notifications()
-                            .markRead(((Notification) item).id)
-                            .subscribe(notif -> Log.d("XAE", "markRead success: " + notif.read_at),
-                                    error -> Log.d("XAE", "markRead error", error));
+                    List<Notification> removedNotifications = mDataSource.removeResource(position);
+                    for (Notification notification : removedNotifications) {
+                        mApiClient.notifications()
+                                .markRead(notification.id)
+                                .subscribe(notif -> Log.d("XAE", "notification read" + notif.id),
+                                        error -> Log.d("XAE", "markRead error", error));
+                    }
+
                 }
             }
         }).attachToRecyclerView(recyclerView);
@@ -100,7 +106,7 @@ public class NotificationsFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        mSubscription = subscribeAdapter(mAdapter);
+        mSubscription = subscribeAdapter(mDataSource);
     }
 
     @Override
@@ -109,15 +115,16 @@ public class NotificationsFragment extends Fragment {
         super.onPause();
     }
 
-    private Subscription subscribeAdapter(final NotificationsAdapter adapter) {
+    private Subscription subscribeAdapter(final NotificationsDataSource adapter) {
         return mApiClient.notifications()
                 .get()
+                .flatMap(Observable::from)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new ErrorToastSubscriber<List<Notification>>(getContext()) {
+                .subscribe(new ErrorToastSubscriber<Notification>(getContext()) {
                     @Override
-                    public void onNext(List<Notification> notifications) {
-                        adapter.setNotifications(notifications);
+                    public void onNext(Notification notification) {
+                        adapter.addNotification(notification);
                     }
                 });
     }
