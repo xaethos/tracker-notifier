@@ -11,5 +11,7 @@ public interface DataSource {
 
     interface Observer {
         void notifyItemRangeInserted(int positionStart, int itemCount);
+
+        void notifyItemRangeRemoved(int positionStart, int itemCount);
     }
 }

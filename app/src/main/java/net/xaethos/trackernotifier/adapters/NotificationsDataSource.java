@@ -8,8 +8,9 @@ import net.xaethos.trackernotifier.models.Resource;
 import net.xaethos.trackernotifier.models.Story;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+
+import rx.Observable;
 
 public class NotificationsDataSource implements DataSource {
 
@@ -120,12 +121,56 @@ public class NotificationsDataSource implements DataSource {
         return item;
     }
 
+    /**
+     * Removes the item at the given position, and all related items.
+     * <p>
+     * Removing a Story or Project will also remove all nested items. Removing the last
+     * Notification from a Story will remove the story as well. Likewise for the last story in a
+     * Project.
+     *
+     * @param position the adapter position of the item to remove
+     * @return a list of the removed notifications
+     */
+    public List<Notification> removeItem(final int position) {
+        Item item = mItems.get(position);
+        int removeStart = position;
+        int removeCount = item.size;
+
+        // Adjust parents' sizes and expand removal range as necessary
+        int parentPosition = position + item.parentOffset;
+        while (parentPosition >= 0) {
+            Item parent = mItems.get(parentPosition);
+            if (parent.size == removeCount + 1) {
+                // Last child in parent; parent goes as well
+                removeStart = parentPosition;
+                removeCount = parent.size;
+            } else {
+                parent.size -= removeCount;
+            }
+            parentPosition += parent.parentOffset;
+        }
+
+        // Get the sublist to remove, and extract the notifications
+        List<Item> removeSubList = mItems.subList(removeStart, removeStart + removeCount);
+        ArrayList<Notification> removedNotifications = new ArrayList<>(removeCount);
+        Observable.from(removeSubList)
+                .map(removedItem -> removedItem.resource)
+                .filter(res -> res instanceof Notification)
+                .cast(Notification.class)
+                .forEach(removedNotifications::add);
+
+        // Do the removal and finish up
+        removeSubList.clear();
+        notifyItemRangeRemoved(removeStart, removeCount);
+        return removedNotifications;
+    }
+
     private void notifyItemRangeInserted(int positionStart, int itemCount) {
         if (mObserver != null) mObserver.notifyItemRangeInserted(positionStart, itemCount);
     }
 
-    public List<Notification> removeResource(int position) {
-        return Collections.emptyList();
+    private void notifyItemRangeRemoved(int positionStart, int itemCount) {
+        if (mObserver != null) mObserver.notifyItemRangeRemoved(positionStart, itemCount);
     }
 
 }

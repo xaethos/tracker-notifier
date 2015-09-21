@@ -20,8 +20,6 @@ import net.xaethos.trackernotifier.api.TrackerClient;
 import net.xaethos.trackernotifier.models.Notification;
 import net.xaethos.trackernotifier.subscribers.ErrorToastSubscriber;
 
-import java.util.List;
-
 import rx.Observable;
 import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
@@ -59,7 +57,7 @@ public class NotificationsFragment extends Fragment {
         NotificationsAdapter adapter = NotificationsAdapter.create();
         mDataSource = adapter.getDataSource();
 
-        Context context = container.getContext();
+        Context context = getContext();
         RecyclerView recyclerView =
                 (RecyclerView) inflater.inflate(R.layout.fragment_notifications, container, false);
         recyclerView.setLayoutManager(new LinearLayoutManager(context));
@@ -80,17 +78,11 @@ public class NotificationsFragment extends Fragment {
             @Override
             public void onSwiped(RecyclerView.ViewHolder viewHolder, int swipeDir) {
                 int position = viewHolder.getAdapterPosition();
-                Object item = mDataSource.getResource(position);
-                if (item instanceof Notification) {
-                    List<Notification> removedNotifications = mDataSource.removeResource(position);
-                    for (Notification notification : removedNotifications) {
-                        mApiClient.notifications()
-                                .markRead(notification.id)
-                                .subscribe(notif -> Log.d("XAE", "notification read" + notif.id),
-                                        error -> Log.d("XAE", "markRead error", error));
-                    }
+                Observable.from(mDataSource.removeItem(position))
+                        .flatMap(notif -> mApiClient.notifications().markRead(notif.id))
+                        .subscribe(notif -> Log.d("XAE", "notification read" + notif.id),
+                                error -> Log.d("XAE", "markRead error", error));
 
-                }
             }
         }).attachToRecyclerView(recyclerView);
 
@@ -119,6 +111,7 @@ public class NotificationsFragment extends Fragment {
         return mApiClient.notifications()
                 .get()
                 .flatMap(Observable::from)
+                .filter(notification -> notification.read_at == null)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new ErrorToastSubscriber<Notification>(getContext()) {
