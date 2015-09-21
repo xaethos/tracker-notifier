@@ -28,4 +28,8 @@ public class Resource {
         return hashCode;
     }
 
+    @Override
+    public String toString() {
+        return "Resource[" + kind + ':' + id + ']';
+    }
 }

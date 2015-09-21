@@ -1,30 +1,42 @@
 package net.xaethos.trackernotifier.adapters;
 
-import android.content.Context;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
 
-import net.xaethos.trackernotifier.R;
-import net.xaethos.trackernotifier.models.Notification;
-import net.xaethos.trackernotifier.models.Project;
-import net.xaethos.trackernotifier.models.Resource;
-import net.xaethos.trackernotifier.models.Story;
+public class NotificationsAdapter extends RecyclerView.Adapter<ResourceViewHolder>
+        implements DataSource.Observer {
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+    private LayoutInflater mLayoutInflater;
+    private final NotificationsDataSource mDataSource;
 
-public class NotificationsAdapter extends RecyclerView.Adapter<ResourceViewHolder> {
+    public static NotificationsAdapter create() {
+        NotificationsDataSource dataSource = new NotificationsDataSource();
+        NotificationsAdapter adapter = new NotificationsAdapter(dataSource);
+        adapter.setHasStableIds(true);
+        dataSource.setObserver(adapter);
+        return adapter;
+    }
 
-    private final LayoutInflater mLayoutInflater;
-    private ArrayList<Resource> mData;
+    NotificationsAdapter(NotificationsDataSource dataSource) {
+        super();
+        mDataSource = dataSource;
+    }
 
-    public NotificationsAdapter(Context context) {
-        mLayoutInflater = LayoutInflater.from(context);
-        mData = new ArrayList<>();
-        setHasStableIds(true);
+    public NotificationsDataSource getDataSource() {
+        return mDataSource;
+    }
+
+    @Override
+    public void onAttachedToRecyclerView(RecyclerView recyclerView) {
+        mLayoutInflater = LayoutInflater.from(recyclerView.getContext());
+        super.onAttachedToRecyclerView(recyclerView);
+    }
+
+    @Override
+    public void onDetachedFromRecyclerView(RecyclerView recyclerView) {
+        super.onDetachedFromRecyclerView(recyclerView);
+        mLayoutInflater = null;
     }
 
     @Override
@@ -34,75 +46,22 @@ public class NotificationsAdapter extends RecyclerView.Adapter<ResourceViewHolde
 
     @Override
     public void onBindViewHolder(ResourceViewHolder holder, int position) {
-        holder.bind(mData.get(position));
-    }
-
-    public Resource getItem(int position) {
-        return mData.get(position);
+        holder.bind(mDataSource.getResource(position));
     }
 
     @Override
     public long getItemId(int position) {
-        return mData.get(position).id;
+        return mDataSource.getItemId(position);
     }
 
     @Override
     public int getItemCount() {
-        return mData.size();
+        return mDataSource.getItemCount();
     }
 
     @Override
     public int getItemViewType(int position) {
-        Resource item = mData.get(position);
-        if (item instanceof Notification) return R.layout.item_notification;
-        if (item instanceof Story) return R.layout.item_story;
-        if (item instanceof Project) return R.layout.item_project;
-        return super.getItemViewType(position);
-    }
-
-    public void setNotifications(List<Notification> notifications) {
-        Map<Project, Map<Story, List<Notification>>> projectMap = new LinkedHashMap<>();
-
-        int count = 0;
-        for (Notification notification : notifications) {
-            if (notification.read_at != null) continue; // Skip notifications marked as read
-            count++; // one notification item
-
-            Map<Story, List<Notification>> storyMap = projectMap.get(notification.project);
-            if (storyMap == null) {
-                count++; // one project header
-                storyMap = new LinkedHashMap<>();
-                projectMap.put(notification.project, storyMap);
-            }
-
-            List<Notification> storyNotifications = storyMap.get(notification.story);
-            if (storyNotifications == null) {
-                count++; // one story header
-                storyNotifications = new ArrayList<>();
-                storyMap.put(notification.story, storyNotifications);
-            }
-
-            storyNotifications.add(notification);
-        }
-
-        ArrayList<Resource> data = new ArrayList<>(count);
-        for (Map.Entry<Project, Map<Story, List<Notification>>> projectEntry : projectMap
-                .entrySet()) {
-            data.add(projectEntry.getKey());
-            for (Map.Entry<Story, List<Notification>> storyEntry : projectEntry.getValue()
-                    .entrySet()) {
-                data.add(storyEntry.getKey());
-                data.addAll(storyEntry.getValue());
-            }
-        }
-
-        mData = data;
-        notifyDataSetChanged();
-    }
-
-    public void removeItem(int position) {
-        mData.remove(position);
-        notifyItemRemoved(position);
+        return mDataSource.getItemViewType(position);
     }
 
 }
