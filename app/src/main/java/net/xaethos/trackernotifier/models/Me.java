@@ -26,6 +26,6 @@ public class Me extends Person {
      *
      * @see #project_ids
      */
-    public List<Project> projects;
+    public List<MembershipSummary> projects;
 
 }
