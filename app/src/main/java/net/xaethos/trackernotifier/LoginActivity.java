@@ -100,7 +100,7 @@ public class LoginActivity extends Activity {
 
         final SharedPreferences prefs = PrefUtils.getPrefs(this);
 
-        mLoginSubscription = TrackerClient.getInstance().user().login(accountName, password)
+        mLoginSubscription = TrackerClient.getInstance(this).user().login(accountName, password)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new ErrorToastSubscriber<Me>(this) {

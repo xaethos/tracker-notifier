@@ -11,7 +11,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import net.xaethos.trackernotifier.MainActivity;
 import net.xaethos.trackernotifier.R;
 import net.xaethos.trackernotifier.adapters.DividerDecorator;
 import net.xaethos.trackernotifier.adapters.NotificationsAdapter;
@@ -24,32 +23,29 @@ import rx.Observable;
 import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.schedulers.Schedulers;
+import rx.subscriptions.MultipleAssignmentSubscription;
 
 public class NotificationsFragment extends Fragment {
 
-    MainActivity mMainActivity;
     NotificationsAdapter mAdapter;
     TrackerClient mApiClient;
 
-    private Subscription mSubscription;
-
-    @Override
-    public void onAttach(Context context) {
-        super.onAttach(context);
-        mMainActivity = (MainActivity) context;
-    }
-
-    @Override
-    public void onDetach() {
-        mMainActivity = null;
-        super.onDetach();
-    }
+    private MultipleAssignmentSubscription mDataSubscription;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mApiClient = TrackerClient.getInstance();
+        mApiClient = TrackerClient.getInstance(getContext());
         mAdapter = NotificationsAdapter.create();
+
+        mDataSubscription = new MultipleAssignmentSubscription();
+        mDataSubscription.set(subscribeDataSource(mAdapter.getDataSource()));
+    }
+
+    @Override
+    public void onDestroy() {
+        mDataSubscription.unsubscribe();
+        super.onDestroy();
     }
 
     @Override
@@ -63,47 +59,9 @@ public class NotificationsFragment extends Fragment {
         recyclerView.addItemDecoration(new DividerDecorator(context));
         recyclerView.setAdapter(mAdapter);
 
-        new ItemTouchHelper(new ItemTouchHelper.SimpleCallback(0,
-                ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT) {
-
-            @Override
-            public boolean onMove(
-                    RecyclerView recyclerView,
-                    RecyclerView.ViewHolder viewHolder,
-                    RecyclerView.ViewHolder target) {
-                return false;
-            }
-
-            @Override
-            public void onSwiped(RecyclerView.ViewHolder viewHolder, int swipeDir) {
-                int position = viewHolder.getAdapterPosition();
-                Observable.from(mAdapter.getDataSource().removeItem(position))
-                        .flatMap(notif -> mApiClient.notifications().markRead(notif.id))
-                        .subscribe(notif -> Log.d("XAE", "notification read" + notif.id),
-                                error -> Log.d("XAE", "markRead error", error));
-
-            }
-        }).attachToRecyclerView(recyclerView);
+        new ItemTouchHelper(new SwipeCallback()).attachToRecyclerView(recyclerView);
 
         return recyclerView;
-    }
-
-    @Override
-    public void onActivityCreated(Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-        mApiClient.setToken(mMainActivity.getToken());
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        mSubscription = subscribeDataSource(mAdapter.getDataSource());
-    }
-
-    @Override
-    public void onPause() {
-        if (mSubscription != null) mSubscription.unsubscribe();
-        super.onPause();
     }
 
     private Subscription subscribeDataSource(final NotificationsDataSource dataSource) {
@@ -119,6 +77,27 @@ public class NotificationsFragment extends Fragment {
                         dataSource.addNotification(notification);
                     }
                 });
+    }
+
+    private class SwipeCallback extends ItemTouchHelper.SimpleCallback {
+
+        public SwipeCallback() {
+            super(0, ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT);
+        }
+
+        @Override
+        public boolean onMove(RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder, RecyclerView.ViewHolder target) {
+            return false;
+        }
+
+        @Override
+        public void onSwiped(RecyclerView.ViewHolder viewHolder, int direction) {
+            int position = viewHolder.getAdapterPosition();
+            Observable.from(mAdapter.getDataSource().removeItem(position))
+                    .flatMap(notif -> mApiClient.notifications().markRead(notif.id))
+                    .subscribe(notif -> Log.d("XAE", "notification read: " + notif.id),
+                            error -> Log.d("XAE", "markRead error", error));
+        }
     }
 
 }

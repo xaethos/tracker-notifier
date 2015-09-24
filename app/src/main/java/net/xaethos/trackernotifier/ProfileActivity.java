@@ -10,38 +10,36 @@ import android.widget.TextView;
 import net.xaethos.trackernotifier.api.TrackerClient;
 import net.xaethos.trackernotifier.models.Me;
 import net.xaethos.trackernotifier.subscribers.ErrorToastSubscriber;
-import net.xaethos.trackernotifier.utils.PrefUtils;
 
 import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.schedulers.Schedulers;
+import rx.subscriptions.MultipleAssignmentSubscription;
 
 public class ProfileActivity extends AppCompatActivity {
 
     private static final int REQUEST_LOGIN = 1;
 
     private TrackerClient mClient;
-    private Subscription mSubscription;
+    private MultipleAssignmentSubscription mSubscription;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_profile);
 
-        mClient = TrackerClient.getInstance();
-        String token = PrefUtils.getPrefs(this).getString(PrefUtils.PREF_TOKEN, null);
-
-        if (token == null) {
-            startActivityForResult(new Intent(this, LoginActivity.class), REQUEST_LOGIN);
+        mSubscription = new MultipleAssignmentSubscription();
+        mClient = TrackerClient.getInstance(this);
+        if (mClient.hasToken()) {
+            mSubscription.set(subscribeViews());
         } else {
-            mClient.setToken(token);
-            mSubscription = subscribeViews();
+            startActivityForResult(new Intent(this, LoginActivity.class), REQUEST_LOGIN);
         }
     }
 
     @Override
     protected void onDestroy() {
-        if (mSubscription != null) mSubscription.unsubscribe();
+        mSubscription.unsubscribe();
         super.onDestroy();
     }
 
@@ -52,8 +50,7 @@ public class ProfileActivity extends AppCompatActivity {
                 finish();
                 return;
             }
-            mClient.setToken(PrefUtils.getPrefs(this).getString(PrefUtils.PREF_TOKEN, null));
-            mSubscription = subscribeViews();
+            mSubscription.set(subscribeViews());
         } else {
             super.onActivityResult(requestCode, resultCode, data);
         }
@@ -85,8 +82,7 @@ public class ProfileActivity extends AppCompatActivity {
         final TextView nameView = (TextView) findViewById(R.id.text_name);
         final TextView initialsView = (TextView) findViewById(R.id.text_initials);
 
-        TrackerClient trackerClient = TrackerClient.getInstance();
-        return trackerClient.user().get()
+        return mClient.user().get()
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new ErrorToastSubscriber<Me>(this) {

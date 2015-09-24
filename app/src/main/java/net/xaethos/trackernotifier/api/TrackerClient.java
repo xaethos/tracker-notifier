@@ -1,9 +1,12 @@
 package net.xaethos.trackernotifier.api;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.util.Base64;
 
 import net.xaethos.trackernotifier.models.Me;
 import net.xaethos.trackernotifier.models.Notification;
+import net.xaethos.trackernotifier.utils.PrefUtils;
 
 import java.util.List;
 
@@ -21,34 +24,34 @@ public class TrackerClient {
 
     private static TrackerClient sInstance;
 
+    private final SharedPreferences mPrefs;
     private final MeApi mMeApi;
     private final NotificationsApi mNotificationsApi;
 
-    private volatile String mToken;
-
-    public static TrackerClient getInstance() {
+    public static TrackerClient getInstance(Context context) {
         if (sInstance == null) {
             Retrofit retrofit =
                     new Retrofit.Builder().baseUrl("https://www.pivotaltracker.com/services/v5/")
                             .addCallAdapterFactory(RxJavaCallAdapterFactory.create())
                             .addConverterFactory(MoshiConverterFactory.create())
                             .build();
-            sInstance = new TrackerClient(retrofit);
+            sInstance = new TrackerClient(retrofit, PrefUtils.getPrefs(context.getApplicationContext()));
         }
         return sInstance;
     }
 
-    TrackerClient(Retrofit retrofit) {
+    TrackerClient(Retrofit retrofit, SharedPreferences prefs) {
+        mPrefs = prefs;
         mMeApi = new MeApiImpl(this, retrofit);
         mNotificationsApi = new NotificationsApiImpl(this, retrofit);
     }
 
     String getToken() {
-        return mToken;
+        return mPrefs.getString(PrefUtils.PREF_TOKEN, null);
     }
 
-    public void setToken(String token) {
-        mToken = token;
+    public boolean hasToken() {
+        return mPrefs.contains(PrefUtils.PREF_TOKEN);
     }
 
     public MeApi user() {

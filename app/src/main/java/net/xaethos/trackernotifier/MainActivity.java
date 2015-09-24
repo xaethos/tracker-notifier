@@ -12,15 +12,12 @@ public class MainActivity extends AppCompatActivity {
 
     private static final int REQUEST_LOGIN = 1;
 
-    private String mToken;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        mToken = PrefUtils.getPrefs(this).getString(PrefUtils.PREF_TOKEN, null);
-        if (mToken == null) {
+        if (!PrefUtils.getPrefs(this).contains(PrefUtils.PREF_TOKEN)) {
             startActivityForResult(new Intent(this, LoginActivity.class), REQUEST_LOGIN);
         }
     }
@@ -30,9 +27,7 @@ public class MainActivity extends AppCompatActivity {
         if (requestCode == REQUEST_LOGIN) {
             if (resultCode != RESULT_OK) {
                 finish();
-                return;
             }
-            mToken = PrefUtils.getPrefs(this).getString(PrefUtils.PREF_TOKEN, null);
         } else {
             super.onActivityResult(requestCode, resultCode, data);
         }
@@ -58,9 +53,5 @@ public class MainActivity extends AppCompatActivity {
         }
 
         return super.onOptionsItemSelected(item);
-    }
-
-    public String getToken() {
-        return mToken;
     }
 }
