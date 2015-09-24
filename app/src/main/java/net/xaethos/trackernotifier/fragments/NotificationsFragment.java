@@ -28,7 +28,7 @@ import rx.schedulers.Schedulers;
 public class NotificationsFragment extends Fragment {
 
     MainActivity mMainActivity;
-    NotificationsDataSource mDataSource;
+    NotificationsAdapter mAdapter;
     TrackerClient mApiClient;
 
     private Subscription mSubscription;
@@ -49,20 +49,19 @@ public class NotificationsFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mApiClient = TrackerClient.getInstance();
+        mAdapter = NotificationsAdapter.create();
     }
 
     @Override
     public View onCreateView(
             LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        NotificationsAdapter adapter = NotificationsAdapter.create();
-        mDataSource = adapter.getDataSource();
 
         Context context = getContext();
         RecyclerView recyclerView =
                 (RecyclerView) inflater.inflate(R.layout.fragment_notifications, container, false);
         recyclerView.setLayoutManager(new LinearLayoutManager(context));
         recyclerView.addItemDecoration(new DividerDecorator(context));
-        recyclerView.setAdapter(adapter);
+        recyclerView.setAdapter(mAdapter);
 
         new ItemTouchHelper(new ItemTouchHelper.SimpleCallback(0,
                 ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT) {
@@ -78,7 +77,7 @@ public class NotificationsFragment extends Fragment {
             @Override
             public void onSwiped(RecyclerView.ViewHolder viewHolder, int swipeDir) {
                 int position = viewHolder.getAdapterPosition();
-                Observable.from(mDataSource.removeItem(position))
+                Observable.from(mAdapter.getDataSource().removeItem(position))
                         .flatMap(notif -> mApiClient.notifications().markRead(notif.id))
                         .subscribe(notif -> Log.d("XAE", "notification read" + notif.id),
                                 error -> Log.d("XAE", "markRead error", error));
@@ -98,7 +97,7 @@ public class NotificationsFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        mSubscription = subscribeAdapter(mDataSource);
+        mSubscription = subscribeDataSource(mAdapter.getDataSource());
     }
 
     @Override
@@ -107,7 +106,7 @@ public class NotificationsFragment extends Fragment {
         super.onPause();
     }
 
-    private Subscription subscribeAdapter(final NotificationsDataSource adapter) {
+    private Subscription subscribeDataSource(final NotificationsDataSource dataSource) {
         return mApiClient.notifications()
                 .get()
                 .flatMap(Observable::from)
@@ -117,7 +116,7 @@ public class NotificationsFragment extends Fragment {
                 .subscribe(new ErrorToastSubscriber<Notification>(getContext()) {
                     @Override
                     public void onNext(Notification notification) {
-                        adapter.addNotification(notification);
+                        dataSource.addNotification(notification);
                     }
                 });
     }
