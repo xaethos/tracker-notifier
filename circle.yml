@@ -1,0 +1,25 @@
+dependencies:
+  pre:
+    - echo y | android update sdk --no-ui --all --filter extra-google-m2repository
+    - echo y | android update sdk --no-ui --all --filter extra-android-m2repository
+test:
+  override:
+    # start the emulator
+    - emulator -avd circleci-android22 -no-audio -no-window:
+        background: true
+        parallel: true
+    - circle-android wait-for-boot
+    # run tests  against the emulator.
+    - >-
+      TERM=dumb
+      ./gradlew
+      connectedAndroidTest
+      testDebug
+      createDebugCoverageReport
+      -PpreDexLibraries=false
+    # copy the build outputs to artifacts
+    - cp -r app/build/outputs $CIRCLE_ARTIFACTS
+    - cp -r app/build/reports $CIRCLE_ARTIFACTS
+    # copy the test results to the test results directory.
+    - cp -r app/build/outputs/androidTest-results/* $CIRCLE_TEST_REPORTS
+    - cp -r app/build/test-results/* $CIRCLE_TEST_REPORTS
