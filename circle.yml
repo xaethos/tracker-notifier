@@ -15,7 +15,6 @@ test:
       ./gradlew
       connectedAndroidTest
       testDebug
-      #createDebugCoverageReport -- coverage is broken at the moment
       assembleDebug
       -PpreDexLibraries=false
     # copy the build outputs to artifacts
