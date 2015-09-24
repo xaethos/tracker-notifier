@@ -3,6 +3,7 @@ package net.xaethos.trackernotifier.fragments;
 import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.helper.ItemTouchHelper;
@@ -30,8 +31,9 @@ import rx.subscriptions.MultipleAssignmentSubscription;
 
 public class NotificationsFragment extends Fragment {
 
-    NotificationsAdapter mAdapter;
     TrackerClient mApiClient;
+    SwipeRefreshLayout mRefreshView;
+    NotificationsAdapter mAdapter;
 
     private MultipleAssignmentSubscription mDataSubscription;
 
@@ -44,7 +46,7 @@ public class NotificationsFragment extends Fragment {
         mAdapter = NotificationsAdapter.create();
 
         mDataSubscription = new MultipleAssignmentSubscription();
-        mDataSubscription.set(subscribeDataSource(mAdapter.getDataSource()));
+        refreshData();
     }
 
     @Override
@@ -56,17 +58,26 @@ public class NotificationsFragment extends Fragment {
     @Override
     public View onCreateView(
             LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-
+        View root = inflater.inflate(R.layout.fragment_notifications, container, false);
         Context context = getContext();
-        RecyclerView recyclerView =
-                (RecyclerView) inflater.inflate(R.layout.fragment_notifications, container, false);
+
+        RecyclerView recyclerView = (RecyclerView) root.findViewById(android.R.id.list);
         recyclerView.setLayoutManager(new LinearLayoutManager(context));
         recyclerView.addItemDecoration(new DividerDecorator(context));
         recyclerView.setAdapter(mAdapter);
 
         new ItemTouchHelper(new SwipeCallback()).attachToRecyclerView(recyclerView);
 
-        return recyclerView;
+        mRefreshView = (SwipeRefreshLayout) root.findViewById(R.id.refresh);
+        mRefreshView.setOnRefreshListener(this::refreshData);
+
+        return root;
+    }
+
+    @Override
+    public void onDestroyView() {
+        mRefreshView = null;
+        super.onDestroyView();
     }
 
     @Override
@@ -79,19 +90,28 @@ public class NotificationsFragment extends Fragment {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.action_refresh:
-                mDataSubscription.set(subscribeDataSource(mAdapter.getDataSource()));
+                refreshData();
+                return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
     }
 
+    private void refreshData() {
+        mDataSubscription.set(subscribeDataSource(mAdapter.getDataSource()));
+    }
+
     private Subscription subscribeDataSource(final NotificationsDataSource dataSource) {
+        if (mRefreshView != null) mRefreshView.setRefreshing(true);
         return mApiClient.notifications()
                 .get()
                 .flatMap(Observable::from)
                 .filter(notification -> notification.read_at == null)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
+                .doOnTerminate(() -> {
+                    if (mRefreshView != null) mRefreshView.setRefreshing(false);
+                })
                 .subscribe(new ErrorToastSubscriber<Notification>(getContext()) {
                     @Override
                     public void onNext(Notification notification) {
