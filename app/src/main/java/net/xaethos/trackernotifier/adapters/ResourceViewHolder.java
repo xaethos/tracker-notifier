@@ -1,6 +1,7 @@
 package net.xaethos.trackernotifier.adapters;
 
 import android.support.v7.widget.RecyclerView;
+import android.text.TextUtils;
 import android.view.View;
 import android.widget.TextView;
 
@@ -12,22 +13,25 @@ import net.xaethos.trackernotifier.models.Story;
 
 public class ResourceViewHolder extends RecyclerView.ViewHolder {
 
-    public final TextView initials;
     public final TextView title;
     public final TextView summary;
 
     public ResourceViewHolder(View itemView) {
         super(itemView);
-        initials = (TextView) itemView.findViewById(R.id.initials);
         title = (TextView) itemView.findViewById(R.id.title);
         summary = (TextView) itemView.findViewById(R.id.summary);
     }
 
     public void bind(Resource item) {
         if (item instanceof Notification) {
-            title.setText(((Notification) item).message);
-            summary.setText(((Notification) item).context);
-            initials.setText(((Notification) item).performer.initials);
+            final Notification notification = (Notification) item;
+            title.setText(notification.message);
+            if (TextUtils.isEmpty(notification.context)) {
+                summary.setVisibility(View.GONE);
+            } else {
+                summary.setText(notification.context);
+                summary.setVisibility(View.VISIBLE);
+            }
         } else if (item instanceof Story) {
             title.setText(((Story) item).name);
         } else if (item instanceof Project) {

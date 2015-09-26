@@ -16,7 +16,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import net.xaethos.trackernotifier.R;
-import net.xaethos.trackernotifier.adapters.DividerDecorator;
+import net.xaethos.trackernotifier.adapters.NotificationsDividerDecorator;
 import net.xaethos.trackernotifier.adapters.NotificationsAdapter;
 import net.xaethos.trackernotifier.adapters.NotificationsDataSource;
 import net.xaethos.trackernotifier.api.TrackerClient;
@@ -63,7 +63,7 @@ public class NotificationsFragment extends Fragment {
 
         RecyclerView recyclerView = (RecyclerView) root.findViewById(android.R.id.list);
         recyclerView.setLayoutManager(new LinearLayoutManager(context));
-        recyclerView.addItemDecoration(new DividerDecorator(context));
+        recyclerView.addItemDecoration(new NotificationsDividerDecorator(context));
         recyclerView.setAdapter(mAdapter);
 
         new ItemTouchHelper(new SwipeCallback()).attachToRecyclerView(recyclerView);

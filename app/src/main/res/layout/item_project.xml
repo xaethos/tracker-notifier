@@ -2,11 +2,11 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#333"
+    android:background="@color/story_release"
     android:orientation="vertical"
     android:paddingBottom="4dp"
-    android:paddingLeft="8dp"
-    android:paddingRight="8dp"
+    android:paddingLeft="16dp"
+    android:paddingRight="16dp"
     android:paddingTop="4dp">
 
     <TextView

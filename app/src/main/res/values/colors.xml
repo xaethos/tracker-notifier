@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <color name="action_start">#e0e2e5</color>
+    <color name="action_finish">#203e64</color>
+    <color name="action_deliver">#f39300</color>
+    <color name="action_accept">#629200</color>
+    <color name="action_reject">#A71f39</color>
+
+    <color name="story_release">#407AA5</color>
+    <color name="story_backlog">#f4f4f4</color>
+
+</resources>
