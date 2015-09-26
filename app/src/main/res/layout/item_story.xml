@@ -11,6 +11,7 @@
     android:paddingTop="4dp">
 
     <ImageView
+        android:id="@+id/icon"
         android:layout_width="18dp"
         android:layout_height="18dp"
         android:src="@drawable/ic_star_black_18dp" />

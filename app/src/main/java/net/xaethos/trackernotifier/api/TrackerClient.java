@@ -96,7 +96,7 @@ public class TrackerClient {
     private static class NotificationsApiImpl implements NotificationsApi {
 
         private interface Api {
-            @GET("my/notifications")
+            @GET("my/notifications?fields=:default,story(story_type,:default)")
             Observable<List<Notification>> get(@Header("X-TrackerToken") String token);
 
             @PUT("my/notifications/{id}")
