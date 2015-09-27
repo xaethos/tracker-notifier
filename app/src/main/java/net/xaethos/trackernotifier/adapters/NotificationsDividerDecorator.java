@@ -27,6 +27,7 @@ public class NotificationsDividerDecorator extends RecyclerView.ItemDecoration {
     public void getItemOffsets(
             Rect outRect, View view, RecyclerView parent, RecyclerView.State state) {
         int childPos = parent.getChildAdapterPosition(view);
+        if (childPos == RecyclerView.NO_POSITION) return;
         switch (parent.getAdapter().getItemViewType(childPos)) {
             case R.layout.item_notification:
             case R.layout.item_story:
@@ -40,8 +41,8 @@ public class NotificationsDividerDecorator extends RecyclerView.ItemDecoration {
         if (mDividerHeight == 0) return;
 
         final RecyclerView.LayoutManager manager = parent.getLayoutManager();
-        final int childCount = parent.getChildCount();
         final Resources resources = parent.getContext().getResources();
+        final int childCount = parent.getChildCount();
         final int leftMargin =
                 resources.getDimensionPixelOffset(R.dimen.divider_notification_left_margin);
         final int rightMargin =
@@ -49,10 +50,12 @@ public class NotificationsDividerDecorator extends RecyclerView.ItemDecoration {
 
         for (int i = 0; i < childCount; i++) {
             View child = parent.getChildAt(i);
+            int childPos = parent.getChildAdapterPosition(child);
+            if (childPos == RecyclerView.NO_POSITION) return;
 
             final int left;
             final int right;
-            switch (parent.getAdapter().getItemViewType(parent.getChildAdapterPosition(child))) {
+            switch (parent.getAdapter().getItemViewType(childPos)) {
                 case R.layout.item_project:
                     continue;
                 case R.layout.item_notification:
