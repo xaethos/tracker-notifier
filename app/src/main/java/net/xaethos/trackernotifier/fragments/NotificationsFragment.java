@@ -2,6 +2,7 @@ package net.xaethos.trackernotifier.fragments;
 
 import android.content.Context;
 import android.os.Bundle;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
@@ -16,9 +17,9 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import net.xaethos.trackernotifier.R;
-import net.xaethos.trackernotifier.adapters.NotificationsDividerDecorator;
 import net.xaethos.trackernotifier.adapters.NotificationsAdapter;
 import net.xaethos.trackernotifier.adapters.NotificationsDataSource;
+import net.xaethos.trackernotifier.adapters.NotificationsDividerDecorator;
 import net.xaethos.trackernotifier.api.TrackerClient;
 import net.xaethos.trackernotifier.models.Notification;
 import net.xaethos.trackernotifier.subscribers.ErrorToastSubscriber;
@@ -136,7 +137,7 @@ public class NotificationsFragment extends Fragment {
             int position = viewHolder.getAdapterPosition();
             Observable.from(mAdapter.getDataSource().removeItem(position))
                     .flatMap(notif -> mApiClient.notifications().markRead(notif.id))
-                    .subscribe(notif -> Log.d("XAE", "notification read: " + notif.id),
+                    .subscribe(notif -> Snackbar.make(getView(), "Notification marked read", Snackbar.LENGTH_LONG).show(),
                             error -> Log.d("XAE", "markRead error", error));
         }
     }
