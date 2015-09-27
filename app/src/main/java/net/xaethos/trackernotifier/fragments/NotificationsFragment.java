@@ -24,6 +24,8 @@ import net.xaethos.trackernotifier.api.TrackerClient;
 import net.xaethos.trackernotifier.models.Notification;
 import net.xaethos.trackernotifier.subscribers.ErrorToastSubscriber;
 
+import java.util.List;
+
 import rx.Observable;
 import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
@@ -121,6 +123,41 @@ public class NotificationsFragment extends Fragment {
                 });
     }
 
+    void markAsRead(List<Notification> notifications) {
+        View container = getView();
+        if (container == null) return;
+        Context context = container.getContext();
+
+        int count = notifications.size();
+        String message = context.getResources().getQuantityString(
+                R.plurals.toast_notifications_read, count, count);
+
+        final NotificationsDataSource dataSource = mAdapter.getDataSource();
+        final Observable<Notification> readItems = Observable.from(notifications);
+
+        Snackbar.make(container, message, Snackbar.LENGTH_LONG)
+                .setCallback(new Snackbar.Callback() {
+                    @Override
+                    public void onDismissed(Snackbar snackbar, int event) {
+                        if (event == DISMISS_EVENT_ACTION) return;
+
+                        // User didn't undo the swipe, so actually mark notifications read
+                        readItems.forEach(notification -> {
+                            mApiClient.notifications().markRead(notification.id)
+                                    .subscribe(n -> Log.i("XAE", "notification read: " + n.id),
+                                            error -> {
+                                                Log.d("XAE", "markRead error", error);
+                                                dataSource.addNotification(notification);
+                                            });
+                        });
+                    }
+                })
+                .setAction(R.string.action_undo, v -> {
+                    readItems.subscribe(dataSource::addNotification);
+                })
+                .show();
+    }
+
     private class SwipeCallback extends ItemTouchHelper.SimpleCallback {
 
         public SwipeCallback() {
@@ -135,10 +172,10 @@ public class NotificationsFragment extends Fragment {
         @Override
         public void onSwiped(RecyclerView.ViewHolder viewHolder, int direction) {
             int position = viewHolder.getAdapterPosition();
-            Observable.from(mAdapter.getDataSource().removeItem(position))
-                    .flatMap(notif -> mApiClient.notifications().markRead(notif.id))
-                    .subscribe(notif -> Snackbar.make(getView(), "Notification marked read", Snackbar.LENGTH_LONG).show(),
-                            error -> Log.d("XAE", "markRead error", error));
+            if (position == RecyclerView.NO_POSITION) return;
+
+            List<Notification> removed = mAdapter.getDataSource().removeItem(position);
+            markAsRead(removed);
         }
     }
 
