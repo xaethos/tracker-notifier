@@ -244,6 +244,30 @@ public class NotificationsDataSourceTest {
         verify(observer).notifyItemRangeRemoved(0, 3);
     }
 
+    @Test
+    public void moreRemovingItems() {
+        Project project = buildProject(0);
+        Story story = buildStory(0);
+        Notification notifications[] = {
+                buildNotification(0, story, project),
+                buildNotification(1, story, project)
+        };
+
+        dataSource.addNotification(notifications[0]);
+        dataSource.addNotification(notifications[1]);
+
+        /*
+          [0] Project 0
+          [1]   Story 0
+          [2]     Notification 0
+          [3]     Notification 1
+         */
+
+        assertThat(dataSource.removeItem(2), contains(notifications[0]));
+        assertThat(dataSource.removeItem(2), contains(notifications[1]));
+        assertThat(dataSource.getItemCount(), is(0));
+    }
+
     private Project buildProject(long id) {
         Project project = new Project();
         project.id = id;

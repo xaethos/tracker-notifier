@@ -87,7 +87,10 @@ public class NotificationsDataSource implements DataSource {
             outOfBounds = resourcePos + item.size;
         }
 
-        if (insertCount > 0) notifyItemRangeInserted(insertPosition, insertCount);
+        if (insertCount > 0) {
+            adjustOffsets(insertPosition + insertCount, insertCount);
+            notifyItemRangeInserted(insertPosition, insertCount);
+        }
     }
 
     /**
@@ -161,8 +164,25 @@ public class NotificationsDataSource implements DataSource {
 
         // Do the removal and finish up
         removeSubList.clear();
+        adjustOffsets(removeStart, -removeCount);
         notifyItemRangeRemoved(removeStart, removeCount);
         return removedNotifications;
+    }
+
+    /**
+     * When inserting or removing items, we need to adjust the parent offset of "sibling" items that
+     * come after.
+     *
+     * @param start first position to adjust
+     * @param delta the size change in the list, positive for inserts, negative for removals
+     */
+    private void adjustOffsets(final int start, final int delta) {
+        int next = start;
+        while (next < mItems.size()) {
+            Item item = mItems.get(next);
+            item.parentOffset -= delta;
+            next += item.size;
+        }
     }
 
     private void notifyItemRangeInserted(int positionStart, int itemCount) {
