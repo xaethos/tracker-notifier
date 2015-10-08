@@ -1,5 +1,6 @@
 <resources>
-    <string name="app_name">Tracker Notifier</string>
+    <string name="app_name_full">Quicker for Pivotal Tracker</string>
+    <string name="app_name">Quicker</string>
 
     <string name="title_activity_profile">Profile</string>
     <string name="title_activity_login">Login</string>

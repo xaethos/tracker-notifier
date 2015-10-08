@@ -9,7 +9,7 @@
         android:allowBackup="true"
         android:fullBackupContent="true"
         android:icon="@mipmap/ic_launcher"
-        android:label="@string/app_name"
+        android:label="@string/app_name_full"
         android:theme="@style/AppTheme">
         <activity
             android:name=".MainActivity"
