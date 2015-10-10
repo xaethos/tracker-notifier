@@ -3,6 +3,8 @@ package net.xaethos.trackernotifier;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.view.Menu;
+import android.view.MenuItem;
 
 import net.xaethos.trackernotifier.utils.PrefUtils;
 
@@ -28,6 +30,24 @@ public class MainActivity extends AppCompatActivity {
             }
         } else {
             super.onActivityResult(requestCode, resultCode, data);
+        }
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+        case R.id.action_logout:
+            PrefUtils.getPrefs(this).edit().remove(PrefUtils.PREF_TOKEN).apply();
+            startActivityForResult(new Intent(this, LoginActivity.class), REQUEST_LOGIN);
+            return true;
+        default:
+            return super.onOptionsItemSelected(item);
         }
     }
 }
