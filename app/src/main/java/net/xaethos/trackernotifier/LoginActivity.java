@@ -100,13 +100,14 @@ public class LoginActivity extends Activity {
 
         final SharedPreferences prefs = PrefUtils.getPrefs(this);
 
-        mLoginSubscription = TrackerClient.getInstance(this).user().login(accountName, password)
+        mLoginSubscription = TrackerClient.getInstance(this)
+                .user()
+                .login(accountName, password)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new ErrorToastSubscriber<Me>(this) {
                     @Override
                     public void onNext(Me user) {
-                        showProgress(false);
                         Toast.makeText(LoginActivity.this,
                                 "Welcome back " + user.name,
                                 Toast.LENGTH_LONG).show();
