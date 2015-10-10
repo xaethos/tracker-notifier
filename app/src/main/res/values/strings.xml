@@ -10,6 +10,9 @@
     <string name="action_logout">Logout</string>
     <string name="action_refresh">Refresh</string>
     <string name="action_undo">Undo</string>
+    <string name="headline_no_notifications">No notifications</string>
+    <string name="msg_pull_to_refresh">Pull to refresh</string>
+    <string name="msg_fetching_content">Fetching content</string>
 
     <plurals name="toast_notifications_read">
         <item quantity="one">%d notification marked read</item>

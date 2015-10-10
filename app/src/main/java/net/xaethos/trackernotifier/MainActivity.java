@@ -6,16 +6,22 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import net.xaethos.trackernotifier.fragments.NotificationsFragment;
 import net.xaethos.trackernotifier.utils.PrefUtils;
 
 public class MainActivity extends AppCompatActivity {
 
     private static final int REQUEST_LOGIN = 1;
 
+    NotificationsFragment mNotificationsFragment;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        mNotificationsFragment =
+                (NotificationsFragment) getSupportFragmentManager().findFragmentById(R.id.fragment);
 
         if (!PrefUtils.getPrefs(this).contains(PrefUtils.PREF_TOKEN)) {
             startActivityForResult(new Intent(this, LoginActivity.class), REQUEST_LOGIN);
@@ -27,6 +33,8 @@ public class MainActivity extends AppCompatActivity {
         if (requestCode == REQUEST_LOGIN) {
             if (resultCode != RESULT_OK) {
                 finish();
+            } else {
+                mNotificationsFragment.refresh();
             }
         } else {
             super.onActivityResult(requestCode, resultCode, data);

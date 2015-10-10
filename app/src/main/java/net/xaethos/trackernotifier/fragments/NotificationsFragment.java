@@ -22,11 +22,12 @@ import net.xaethos.trackernotifier.adapters.NotificationsDataSource;
 import net.xaethos.trackernotifier.adapters.NotificationsDividerDecorator;
 import net.xaethos.trackernotifier.api.TrackerClient;
 import net.xaethos.trackernotifier.models.Notification;
-import net.xaethos.trackernotifier.subscribers.ErrorToastSubscriber;
+import net.xaethos.trackernotifier.utils.ViewUtils;
 
 import java.util.List;
 
 import rx.Observable;
+import rx.Subscriber;
 import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.schedulers.Schedulers;
@@ -35,7 +36,10 @@ import rx.subscriptions.MultipleAssignmentSubscription;
 public class NotificationsFragment extends Fragment {
 
     TrackerClient mApiClient;
+
     SwipeRefreshLayout mRefreshView;
+    View mEmptyView;
+
     NotificationsAdapter mAdapter;
 
     private MultipleAssignmentSubscription mDataSubscription;
@@ -49,7 +53,7 @@ public class NotificationsFragment extends Fragment {
         mAdapter = NotificationsAdapter.create();
 
         mDataSubscription = new MultipleAssignmentSubscription();
-        refreshData();
+        refresh();
     }
 
     @Override
@@ -72,7 +76,9 @@ public class NotificationsFragment extends Fragment {
         new ItemTouchHelper(new SwipeCallback()).attachToRecyclerView(recyclerView);
 
         mRefreshView = (SwipeRefreshLayout) root.findViewById(R.id.refresh);
-        mRefreshView.setOnRefreshListener(this::refreshData);
+        mRefreshView.setOnRefreshListener(this::refresh);
+
+        mEmptyView = root.findViewById(android.R.id.empty);
 
         return root;
     }
@@ -80,6 +86,7 @@ public class NotificationsFragment extends Fragment {
     @Override
     public void onDestroyView() {
         mRefreshView = null;
+        mEmptyView = null;
         super.onDestroyView();
     }
 
@@ -92,20 +99,28 @@ public class NotificationsFragment extends Fragment {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
-            case R.id.action_refresh:
-                refreshData();
-                return true;
-            default:
-                return super.onOptionsItemSelected(item);
+        case R.id.action_refresh:
+            refresh();
+            return true;
+        default:
+            return super.onOptionsItemSelected(item);
         }
     }
 
-    private void refreshData() {
+    public void refresh() {
         mDataSubscription.set(subscribeDataSource(mAdapter.getDataSource()));
+    }
+
+    private void setEmptyViewText(CharSequence headline, CharSequence caption) {
+        if (mEmptyView == null) return;
+        ViewUtils.setTextOrHide(mEmptyView.findViewById(R.id.headline), headline);
+        ViewUtils.setTextOrHide(mEmptyView.findViewById(R.id.caption), caption);
     }
 
     private Subscription subscribeDataSource(final NotificationsDataSource dataSource) {
         if (mRefreshView != null) mRefreshView.setRefreshing(true);
+        if (mEmptyView != null) setEmptyViewText(null, getText(R.string.msg_fetching_content));
+
         return mApiClient.notifications()
                 .get()
                 .flatMap(Observable::from)
@@ -115,10 +130,32 @@ public class NotificationsFragment extends Fragment {
                 .doOnTerminate(() -> {
                     if (mRefreshView != null) mRefreshView.setRefreshing(false);
                 })
-                .subscribe(new ErrorToastSubscriber<Notification>(getContext()) {
+                .subscribe(new Subscriber<Notification>() {
                     @Override
                     public void onNext(Notification notification) {
                         dataSource.addNotification(notification);
+                        if (mEmptyView != null) ViewUtils.animateVisible(mEmptyView, false);
+                    }
+
+                    @Override
+                    public void onCompleted() {
+                        if (mEmptyView == null) return;
+                        Context context = mEmptyView.getContext();
+                        if (dataSource.getItemCount() == 0) {
+                            setEmptyViewText(context.getText(R.string.headline_no_notifications),
+                                    context.getText(R.string.msg_pull_to_refresh));
+                            ViewUtils.animateVisible(mEmptyView, true);
+                        } else {
+                            ViewUtils.animateVisible(mEmptyView, false);
+                        }
+                    }
+
+                    @Override
+                    public void onError(Throwable error) {
+                        Log.d("XAE", "Error fetching notifications", error);
+                        if (mEmptyView != null) {
+                            setEmptyViewText("Error", error.getLocalizedMessage());
+                        }
                     }
                 });
     }
@@ -129,8 +166,8 @@ public class NotificationsFragment extends Fragment {
         Context context = container.getContext();
 
         int count = notifications.size();
-        String message = context.getResources().getQuantityString(
-                R.plurals.toast_notifications_read, count, count);
+        String message = context.getResources()
+                .getQuantityString(R.plurals.toast_notifications_read, count, count);
 
         final NotificationsDataSource dataSource = mAdapter.getDataSource();
         final Observable<Notification> readItems = Observable.from(notifications);
@@ -143,7 +180,8 @@ public class NotificationsFragment extends Fragment {
 
                         // User didn't undo the swipe, so actually mark notifications read
                         readItems.forEach(notification -> {
-                            mApiClient.notifications().markRead(notification.id)
+                            mApiClient.notifications()
+                                    .markRead(notification.id)
                                     .subscribe(n -> Log.i("XAE", "notification read: " + n.id),
                                             error -> {
                                                 Log.d("XAE", "markRead error", error);
@@ -165,7 +203,10 @@ public class NotificationsFragment extends Fragment {
         }
 
         @Override
-        public boolean onMove(RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder, RecyclerView.ViewHolder target) {
+        public boolean onMove(
+                RecyclerView recyclerView,
+                RecyclerView.ViewHolder viewHolder,
+                RecyclerView.ViewHolder target) {
             return false;
         }
 
