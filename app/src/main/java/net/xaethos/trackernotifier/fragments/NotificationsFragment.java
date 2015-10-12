@@ -22,6 +22,7 @@ import net.xaethos.trackernotifier.adapters.NotificationsDataSource;
 import net.xaethos.trackernotifier.adapters.NotificationsDividerDecorator;
 import net.xaethos.trackernotifier.api.TrackerClient;
 import net.xaethos.trackernotifier.models.Notification;
+import net.xaethos.trackernotifier.utils.Notifications;
 import net.xaethos.trackernotifier.utils.ViewUtils;
 
 import java.util.List;
@@ -49,10 +50,15 @@ public class NotificationsFragment extends Fragment {
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(true);
 
-        mApiClient = TrackerClient.getInstance(getContext());
+        mApiClient = TrackerClient.getInstance();
         mAdapter = NotificationsAdapter.create();
 
         mDataSubscription = new MultipleAssignmentSubscription();
+    }
+
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
         refresh();
     }
 
@@ -121,8 +127,7 @@ public class NotificationsFragment extends Fragment {
         if (mRefreshView != null) mRefreshView.setRefreshing(true);
         if (mEmptyView != null) setEmptyViewText(null, getText(R.string.msg_fetching_content));
 
-        return mApiClient.notifications()
-                .get()
+        return mApiClient.notifications.get()
                 .flatMap(Observable::from)
                 .filter(notification -> notification.read_at == null)
                 .subscribeOn(Schedulers.io())
@@ -180,8 +185,7 @@ public class NotificationsFragment extends Fragment {
 
                         // User didn't undo the swipe, so actually mark notifications read
                         readItems.forEach(notification -> {
-                            mApiClient.notifications()
-                                    .markRead(notification.id)
+                            Notifications.markRead(mApiClient, notification.id)
                                     .subscribe(n -> Log.i("XAE", "notification read: " + n.id),
                                             error -> {
                                                 Log.d("XAE", "markRead error", error);

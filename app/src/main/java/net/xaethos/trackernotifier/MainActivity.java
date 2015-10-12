@@ -6,8 +6,9 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import net.xaethos.trackernotifier.api.TrackerClient;
 import net.xaethos.trackernotifier.fragments.NotificationsFragment;
-import net.xaethos.trackernotifier.utils.PrefUtils;
+import net.xaethos.trackernotifier.utils.PreferencesManager;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -23,8 +24,13 @@ public class MainActivity extends AppCompatActivity {
         mNotificationsFragment =
                 (NotificationsFragment) getSupportFragmentManager().findFragmentById(R.id.fragment);
 
-        if (!PrefUtils.getPrefs(this).contains(PrefUtils.PREF_TOKEN)) {
-            startActivityForResult(new Intent(this, LoginActivity.class), REQUEST_LOGIN);
+        if (!TrackerClient.getInstance().hasToken()) {
+            PreferencesManager prefs = PreferencesManager.getInstance(this);
+            if (!prefs.hasTrackerToken()) {
+                startActivityForResult(new Intent(this, LoginActivity.class), REQUEST_LOGIN);
+            } else {
+                TrackerClient.getInstance().setToken(prefs.getTrackerToken());
+            }
         }
     }
 
@@ -51,7 +57,8 @@ public class MainActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
         case R.id.action_logout:
-            PrefUtils.getPrefs(this).edit().remove(PrefUtils.PREF_TOKEN).apply();
+            TrackerClient.getInstance().setToken(null);
+            PreferencesManager.getInstance(this).setTrackerToken(null);
             startActivityForResult(new Intent(this, LoginActivity.class), REQUEST_LOGIN);
             return true;
         default:

@@ -1,7 +1,6 @@
 package net.xaethos.trackernotifier;
 
 import android.app.Activity;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.View;
@@ -12,7 +11,7 @@ import android.widget.Toast;
 import net.xaethos.trackernotifier.api.TrackerClient;
 import net.xaethos.trackernotifier.models.Me;
 import net.xaethos.trackernotifier.subscribers.ErrorToastSubscriber;
-import net.xaethos.trackernotifier.utils.PrefUtils;
+import net.xaethos.trackernotifier.utils.PreferencesManager;
 import net.xaethos.trackernotifier.utils.ViewUtils;
 
 import rx.Subscription;
@@ -98,11 +97,10 @@ public class LoginActivity extends Activity {
         // perform the user login attempt.
         showProgress(true);
 
-        final SharedPreferences prefs = PrefUtils.getPrefs(this);
+        final PreferencesManager prefs = PreferencesManager.getInstance(this);
+        final TrackerClient trackerClient = TrackerClient.getInstance();
 
-        mLoginSubscription = TrackerClient.getInstance(this)
-                .user()
-                .login(accountName, password)
+        mLoginSubscription = trackerClient.login(accountName, password)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new ErrorToastSubscriber<Me>(this) {
@@ -112,10 +110,10 @@ public class LoginActivity extends Activity {
                                 "Welcome back " + user.name,
                                 Toast.LENGTH_LONG).show();
 
-                        if (prefs.edit().putString(PrefUtils.PREF_TOKEN, user.api_token).commit()) {
-                            setResult(RESULT_OK);
-                            finish();
-                        }
+                        trackerClient.setToken(user.api_token);
+                        prefs.setTrackerToken(user.api_token);
+                        setResult(RESULT_OK);
+                        finish();
                     }
 
                     @Override

@@ -1,129 +1,109 @@
 package net.xaethos.trackernotifier.api;
 
-import android.content.Context;
-import android.content.SharedPreferences;
 import android.util.Base64;
+import android.util.Log;
 
+import com.squareup.okhttp.Interceptor;
+import com.squareup.okhttp.Request;
+import com.squareup.okhttp.Response;
+
+import net.xaethos.trackernotifier.BuildConfig;
 import net.xaethos.trackernotifier.models.Me;
-import net.xaethos.trackernotifier.models.Notification;
-import net.xaethos.trackernotifier.utils.PrefUtils;
 
-import java.util.List;
+import java.io.IOException;
 
 import retrofit.MoshiConverterFactory;
 import retrofit.Retrofit;
 import retrofit.RxJavaCallAdapterFactory;
-import retrofit.http.Body;
-import retrofit.http.GET;
-import retrofit.http.Header;
-import retrofit.http.PUT;
-import retrofit.http.Path;
 import rx.Observable;
 
 public class TrackerClient {
 
     private static TrackerClient sInstance;
 
-    private final SharedPreferences mPrefs;
-    private final MeApi mMeApi;
-    private final NotificationsApi mNotificationsApi;
+    private final AuthInterceptor mAuthInterceptor = new AuthInterceptor();
 
-    public static TrackerClient getInstance(Context context) {
+    public final MeApi me;
+    public final NotificationsApi notifications;
+
+    public static TrackerClient getInstance() {
         if (sInstance == null) {
             Retrofit retrofit =
                     new Retrofit.Builder().baseUrl("https://www.pivotaltracker.com/services/v5/")
                             .addCallAdapterFactory(RxJavaCallAdapterFactory.create())
                             .addConverterFactory(MoshiConverterFactory.create())
                             .build();
-            sInstance = new TrackerClient(retrofit, PrefUtils.getPrefs(context.getApplicationContext()));
+            if (BuildConfig.DEBUG) retrofit.client().interceptors().add(new LoggingInterceptor());
+            sInstance = new TrackerClient(retrofit);
         }
         return sInstance;
     }
 
-    TrackerClient(Retrofit retrofit, SharedPreferences prefs) {
-        mPrefs = prefs;
-        mMeApi = new MeApiImpl(this, retrofit);
-        mNotificationsApi = new NotificationsApiImpl(this, retrofit);
-    }
+    TrackerClient(Retrofit retrofit) {
+        retrofit.client().interceptors().add(0, mAuthInterceptor);
 
-    String getToken() {
-        return mPrefs.getString(PrefUtils.PREF_TOKEN, null);
+        me = retrofit.create(MeApi.class);
+        notifications = retrofit.create(NotificationsApi.class);
     }
 
     public boolean hasToken() {
-        return mPrefs.contains(PrefUtils.PREF_TOKEN);
+        return mAuthInterceptor.hasAuthToken();
     }
 
-    public MeApi user() {
-        return mMeApi;
+    public void setToken(String trackerToken) {
+        mAuthInterceptor.setToken(trackerToken);
     }
 
-    public NotificationsApi notifications() {
-        return mNotificationsApi;
+    public Observable<Me> login(String username, String password) {
+        String credentials = username + ":" + password;
+        String auth = "Basic " + Base64.encodeToString(credentials.getBytes(), Base64.NO_WRAP);
+        return me.login(auth);
     }
 
-    private static class MeApiImpl implements MeApi {
-
-        public interface Api {
-            @GET("me")
-            Observable<Me> login(@Header("Authorization") String authorization);
-
-            @GET("me")
-            Observable<Me> get(@Header("X-TrackerToken") String token);
-        }
-
-        private final TrackerClient mClient;
-        private final Api mApi;
-
-        public MeApiImpl(TrackerClient client, Retrofit retrofit) {
-            mClient = client;
-            mApi = retrofit.create(Api.class);
-        }
+    private static class AuthInterceptor implements Interceptor {
+        private String mTrackerToken;
 
         @Override
-        public Observable<Me> login(String username, String password) {
-            String credentials = username + ":" + password;
-            String auth = "Basic " + Base64.encodeToString(credentials.getBytes(), Base64.NO_WRAP);
-            return mApi.login(auth);
+        public Response intercept(Chain chain) throws IOException {
+            Request request = chain.request();
+            if (mTrackerToken == null) return chain.proceed(request);
+
+            Request authorizedRequest =
+                    request.newBuilder().header("X-TrackerToken", mTrackerToken).build();
+            return chain.proceed(authorizedRequest);
         }
 
-        @Override
-        public Observable<Me> get() {
-            return mApi.get(mClient.getToken());
+        public boolean hasAuthToken() {
+            return mTrackerToken != null;
+        }
+
+        public void setToken(String trackerToken) {
+            mTrackerToken = trackerToken;
         }
     }
 
-    private static class NotificationsApiImpl implements NotificationsApi {
-
-        private interface Api {
-            @GET("my/notifications?fields=:default,story(story_type,:default)")
-            Observable<List<Notification>> get(@Header("X-TrackerToken") String token);
-
-            @PUT("my/notifications/{id}")
-            Observable<Notification> markRead(
-                    @Header("X-TrackerToken") String token,
-                    @Path("id") long notificationId,
-                    @Body Notification notification);
-        }
-
-        private final TrackerClient mClient;
-        private final Api mApi;
-
-        public NotificationsApiImpl(TrackerClient client, Retrofit retrofit) {
-            mClient = client;
-            mApi = retrofit.create(Api.class);
-        }
-
+    private static class LoggingInterceptor implements Interceptor {
         @Override
-        public Observable<List<Notification>> get() {
-            return mApi.get(mClient.getToken());
-        }
+        public Response intercept(Chain chain) throws IOException {
+            Request request = chain.request();
 
-        @Override
-        public Observable<Notification> markRead(long notificationId) {
-            Notification readNotification = new Notification();
-            readNotification.read_at = System.currentTimeMillis();
-            return mApi.markRead(mClient.getToken(), notificationId, readNotification);
+            long t1 = System.nanoTime();
+            Log.v("TrackerClient",
+                    String.format("Sending request %s on %s%n%s",
+                            request.url(),
+                            chain.connection(),
+                            request.headers()));
+
+            Response response = chain.proceed(request);
+
+            long t2 = System.nanoTime();
+            Log.v("TrackerClient",
+                    String.format("Received response for %s in %.1fms%n%s",
+                            response.request().url(),
+                            (t2 - t1) / 1e6d,
+                            response.headers()));
+
+            return response;
         }
     }
 }
