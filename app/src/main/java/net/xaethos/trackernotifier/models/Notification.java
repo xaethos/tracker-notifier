@@ -27,8 +27,7 @@ public class Notification extends Resource {
 
     /**
      * Id of the person who triggered the notification. This field is read only. By default this
-     * will be included in responses as a nested structure, using {@link #performer}. In API
-     * responses, this attribute may be performer_id or performer.
+     * will be included in responses as a nested structure, using {@link #performer}.
      */
     public long performer_id;
 
