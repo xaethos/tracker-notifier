@@ -25,6 +25,7 @@ public class TrackerClient {
 
     public final MeApi me;
     public final NotificationsApi notifications;
+    public final StoriesApi stories;
 
     public static TrackerClient getInstance() {
         if (sInstance == null) {
@@ -44,6 +45,7 @@ public class TrackerClient {
 
         me = retrofit.create(MeApi.class);
         notifications = retrofit.create(NotificationsApi.class);
+        stories = retrofit.create(StoriesApi.class);
     }
 
     public boolean hasToken() {

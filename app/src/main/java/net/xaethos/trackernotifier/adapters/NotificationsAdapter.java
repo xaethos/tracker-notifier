@@ -41,7 +41,7 @@ public class NotificationsAdapter extends RecyclerView.Adapter<ResourceViewHolde
 
     @Override
     public ResourceViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        return new ResourceViewHolder(mLayoutInflater.inflate(viewType, parent, false));
+        return ResourceViewHolder.create(mLayoutInflater, viewType, parent);
     }
 
     @Override
