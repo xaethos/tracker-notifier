@@ -1,6 +1,8 @@
 package net.xaethos.trackernotifier.models;
 
-public class Resource {
+import java.io.Serializable;
+
+public class Resource implements Serializable {
 
     /**
      * Database id of the resource. This field is read only. This field is always returned.
