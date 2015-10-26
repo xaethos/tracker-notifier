@@ -17,10 +17,12 @@
     <string name="msg_pull_to_refresh">Pull to refresh</string>
     <string name="msg_fetching_content">Fetching content</string>
 
+    <string name="label_story_id">story id</string>
     <string name="label_name">name</string>
     <string name="label_description">description</string>
     <string name="label_state">state</string>
     <string name="label_story_type">story type</string>
+    <string name="label_points">points</string>
 
     <string name="hint_empty">empty</string>
     <string name="hint_unknown">unknown</string>

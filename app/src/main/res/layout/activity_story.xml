@@ -21,8 +21,8 @@
             android:fitsSystemWindows="true"
             app:contentScrim="?attr/colorPrimary"
             app:expandedTitleGravity="top"
-            app:expandedTitleMarginTop="0dp"
             app:expandedTitleMarginStart="@dimen/activity_horizontal_margin"
+            app:expandedTitleMarginTop="24dp"
             app:expandedTitleTextAppearance="@style/TextAppearance.AppCompat.Widget.ActionBar.Title"
             app:layout_scrollFlags="scroll|exitUntilCollapsed">
 
@@ -37,7 +37,7 @@
                 <TextView
                     android:id="@+id/label_type"
                     style="@style/Widget.Quicker.Label.AppBar"
-                    android:layout_width="wrap_content"
+                    android:layout_width="120dp"
                     android:layout_height="wrap_content"
                     android:text="@string/label_story_type" />
 
@@ -59,6 +59,10 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_centerHorizontal="true"
+                    android:layout_marginLeft="16dp"
+                    android:layout_marginStart="16dp"
+                    android:layout_toEndOf="@id/label_type"
+                    android:layout_toRightOf="@id/label_type"
                     android:text="@string/label_state" />
 
                 <TextView
@@ -66,6 +70,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_alignLeft="@id/label_state"
+                    android:layout_alignStart="@id/label_state"
                     android:layout_below="@id/label_state"
                     android:layout_gravity="bottom"
                     android:drawablePadding="4dp"
@@ -104,12 +109,12 @@
         layout="@layout/content_story_details" />
 
     <!--<android.support.design.widget.FloatingActionButton-->
-        <!--android:id="@+id/fab"-->
-        <!--android:layout_width="wrap_content"-->
-        <!--android:layout_height="wrap_content"-->
-        <!--android:layout_margin="@dimen/fab_margin"-->
-        <!--android:src="@android:drawable/ic_dialog_email"-->
-        <!--app:layout_anchor="@id/app_bar"-->
-        <!--app:layout_anchorGravity="bottom|end" />-->
+    <!--android:id="@+id/fab"-->
+    <!--android:layout_width="wrap_content"-->
+    <!--android:layout_height="wrap_content"-->
+    <!--android:layout_margin="@dimen/fab_margin"-->
+    <!--android:src="@android:drawable/ic_dialog_email"-->
+    <!--app:layout_anchor="@id/app_bar"-->
+    <!--app:layout_anchorGravity="bottom|end" />-->
 
 </android.support.design.widget.CoordinatorLayout>

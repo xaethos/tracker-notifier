@@ -16,6 +16,8 @@ import net.xaethos.trackernotifier.api.TrackerClient;
 import net.xaethos.trackernotifier.models.Story;
 import net.xaethos.trackernotifier.subscribers.ErrorToastSubscriber;
 
+import java.text.DecimalFormat;
+
 import rx.android.schedulers.AndroidSchedulers;
 
 public class StoryActivity extends AppCompatActivity {
@@ -79,11 +81,19 @@ public class StoryActivity extends AppCompatActivity {
     }
 
     private void setupContent(View contentView, @Nullable Story story) {
-        TextView nameView = (TextView) contentView.findViewById(R.id.text_name);
-        nameView.setText(story == null ? null : story.name);
+        TextView valueView;
 
-        TextView descriptionView = (TextView) contentView.findViewById(R.id.text_description);
-        descriptionView.setText(story == null ? null : story.description);
+        valueView = (TextView) contentView.findViewById(R.id.text_id);
+        valueView.setText(story == null ? null : String.valueOf(story.id));
+
+        valueView = (TextView) contentView.findViewById(R.id.text_points);
+        valueView.setText(story == null ? null : new DecimalFormat("0.##").format(story.estimate));
+
+        valueView = (TextView) contentView.findViewById(R.id.text_name);
+        valueView.setText(story == null ? null : story.name);
+
+        valueView = (TextView) contentView.findViewById(R.id.text_description);
+        valueView.setText(story == null ? null : story.description);
     }
 
     private void setupFab(FloatingActionButton fab) {
