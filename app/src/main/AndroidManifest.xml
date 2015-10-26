@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest
-    package="net.xaethos.trackernotifier"
-    xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="net.xaethos.trackernotifier">
 
     <uses-permission android:name="android.permission.INTERNET" />
 
@@ -27,6 +26,15 @@
             android:name=".LoginActivity"
             android:label="@string/title_activity_login"
             android:windowSoftInputMode="adjustResize|stateVisible" />
+        <activity
+            android:name=".StoryActivity"
+            android:label="@string/title_activity_story"
+            android:parentActivityName=".MainActivity"
+            android:theme="@style/AppTheme.NoActionBar">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="net.xaethos.trackernotifier.MainActivity" />
+        </activity>
     </application>
 
 </manifest>
