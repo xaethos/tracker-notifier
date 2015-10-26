@@ -52,12 +52,8 @@ public class StoryActivity extends AppCompatActivity {
 
         View contentView = findViewById(R.id.content_story);
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(view -> Snackbar.make(view,
-                "Replace with your own action",
-                Snackbar.LENGTH_LONG).setAction("Action", null).show());
-
         setupAppBar(toolbarLayout, storyHint);
+        //setupFab((FloatingActionButton) findViewById(R.id.fab));
 
         TrackerClient.getInstance().stories.show(storyId)
                 .observeOn(AndroidSchedulers.mainThread())
@@ -88,6 +84,12 @@ public class StoryActivity extends AppCompatActivity {
 
         TextView descriptionView = (TextView) contentView.findViewById(R.id.text_description);
         descriptionView.setText(story == null ? null : story.description);
+    }
+
+    private void setupFab(FloatingActionButton fab) {
+        fab.setOnClickListener(view -> Snackbar.make(view,
+                "Replace with your own action",
+                Snackbar.LENGTH_LONG).setAction("Action", null).show());
     }
 
     private static int getTypeDrawable(@Story.Type String storyType) {
