@@ -50,7 +50,7 @@ public class ResourceViewHolder extends RecyclerView.ViewHolder {
     public void bind(Resource item) {
         if (item instanceof Notification) {
             final Notification notification = (Notification) item;
-            mShowStoryListener.storyId = notification.story.id;
+            mShowStoryListener.story = notification.story;
             title.setText(notification.message);
             if (TextUtils.isEmpty(notification.context)) {
                 summary.setVisibility(View.GONE);
@@ -59,7 +59,7 @@ public class ResourceViewHolder extends RecyclerView.ViewHolder {
                 summary.setVisibility(View.VISIBLE);
             }
         } else if (item instanceof Story) {
-            mShowStoryListener.storyId = item.id;
+            mShowStoryListener.story = (Story) item;
             title.setText(((Story) item).name);
             switch (((Story) item).story_type) {
             case Story.TYPE_FEATURE:
@@ -83,12 +83,12 @@ public class ResourceViewHolder extends RecyclerView.ViewHolder {
     }
 
     private static class OnClickShowStory implements View.OnClickListener {
-        public long storyId;
+        public Story story;
 
         @Override
         public void onClick(View v) {
             Context context = v.getContext();
-            context.startActivity(StoryActivity.forStory(context, storyId));
+            context.startActivity(StoryActivity.forStory(context, story));
         }
     }
 

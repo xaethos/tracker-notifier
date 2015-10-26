@@ -14,4 +14,15 @@
 
     <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
 
+    <style name="Widget.Quicker.Label" parent="">
+        <item name="android:paddingTop">@dimen/text_margin</item>
+        <item name="android:paddingBottom">4dp</item>
+        <item name="android:textColor">?attr/colorAccent</item>
+        <item name="android:textAppearance">@style/TextAppearance.AppCompat.Caption</item>
+    </style>
+
+    <style name="Widget.Quicker.Label.AppBar">
+        <item name="android:textColor">?android:attr/textColorSecondary</item>
+    </style>
+
 </resources>
