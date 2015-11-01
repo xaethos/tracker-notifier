@@ -12,7 +12,7 @@ import net.xaethos.trackernotifier.api.TrackerClient;
 import net.xaethos.trackernotifier.models.Me;
 import net.xaethos.trackernotifier.subscribers.ErrorToastSubscriber;
 import net.xaethos.trackernotifier.utils.PreferencesManager;
-import net.xaethos.trackernotifier.utils.ViewUtils;
+import net.xaethos.trackernotifier.utils.ViewUtilsKt;
 
 import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
@@ -129,9 +129,9 @@ public class LoginActivity extends Activity {
      */
     public void showProgress(final boolean show) {
         if (show) {
-            ViewUtils.switchVisible(mProgressView, mLoginFormView);
+            ViewUtilsKt.switchVisible(mProgressView, mLoginFormView);
         } else {
-            ViewUtils.switchVisible(mLoginFormView, mProgressView);
+            ViewUtilsKt.switchVisible(mLoginFormView, mProgressView);
         }
     }
 
