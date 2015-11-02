@@ -55,16 +55,17 @@ fun switchVisible(showView: View, vararg hideViews: View) {
  * *
  * @param visible  whether to show or hide the view
  */
-fun animateVisible(showView: View, visible: Boolean) {
+fun View?.animateVisible(visible: Boolean) {
+    if (this == null) return;
     val visibility = if (visible) View.VISIBLE else View.GONE
-    if (showView.visibility == visibility) return
-    showView.visibility = visibility
-    showView.animate()
-            .setDuration(getShortAnimTime(showView.resources))
+    if (this.visibility == visibility) return
+    this.visibility = visibility
+    this.animate()
+            .setDuration(getShortAnimTime(this.resources))
             .alpha((if (visible) 1f else 0f))
             .setListener(object : AnimatorListenerAdapter() {
                 override fun onAnimationEnd(animation: Animator) {
-                    showView.visibility = visibility
+                    this@animateVisible.visibility = visibility
                 }
             })
 }
