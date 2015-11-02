@@ -11,6 +11,7 @@ import android.widget.TextView;
 
 import net.xaethos.trackernotifier.R;
 import net.xaethos.trackernotifier.StoryActivity;
+import net.xaethos.trackernotifier.models.Comment;
 import net.xaethos.trackernotifier.models.Notification;
 import net.xaethos.trackernotifier.models.Project;
 import net.xaethos.trackernotifier.models.Resource;
@@ -50,6 +51,7 @@ public class ResourceViewHolder extends RecyclerView.ViewHolder {
     public void bind(Resource item) {
         if (item instanceof Notification) {
             final Notification notification = (Notification) item;
+            mShowStoryListener.projectId = notification.project.id;
             mShowStoryListener.story = notification.story;
             title.setText(notification.message);
             if (TextUtils.isEmpty(notification.context)) {
@@ -59,6 +61,7 @@ public class ResourceViewHolder extends RecyclerView.ViewHolder {
                 summary.setVisibility(View.VISIBLE);
             }
         } else if (item instanceof Story) {
+            mShowStoryListener.projectId = 0; //FIXME
             mShowStoryListener.story = (Story) item;
             title.setText(((Story) item).name);
             switch (((Story) item).story_type) {
@@ -79,16 +82,19 @@ public class ResourceViewHolder extends RecyclerView.ViewHolder {
             }
         } else if (item instanceof Project) {
             title.setText(((Project) item).name);
+        } else if (item instanceof Comment) {
+            title.setText(((Comment) item).text);
         }
     }
 
     private static class OnClickShowStory implements View.OnClickListener {
+        public long projectId;
         public Story story;
 
         @Override
         public void onClick(View v) {
             Context context = v.getContext();
-            context.startActivity(StoryActivity.forStory(context, story));
+            context.startActivity(StoryActivity.forStory(context, projectId, story));
         }
     }
 

@@ -10,6 +10,8 @@ public interface DataSource {
     void setObserver(Observer observer);
 
     interface Observer {
+        void notifyDataSetChanged();
+
         void notifyItemRangeInserted(int positionStart, int itemCount);
 
         void notifyItemRangeRemoved(int positionStart, int itemCount);

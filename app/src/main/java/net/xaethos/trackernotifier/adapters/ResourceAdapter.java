@@ -4,26 +4,20 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
 
-public class NotificationsAdapter extends RecyclerView.Adapter<ResourceViewHolder>
-        implements DataSource.Observer {
+import net.xaethos.trackernotifier.models.Resource;
+
+public class ResourceAdapter<R extends Resource, DS extends ResourceDataSource<R>>
+        extends RecyclerView.Adapter<ResourceViewHolder> implements DataSource.Observer {
 
     private LayoutInflater mLayoutInflater;
-    private final NotificationsDataSource mDataSource;
+    private final DS mDataSource;
 
-    public static NotificationsAdapter create() {
-        NotificationsDataSource dataSource = new NotificationsDataSource();
-        NotificationsAdapter adapter = new NotificationsAdapter(dataSource);
-        adapter.setHasStableIds(true);
-        dataSource.setObserver(adapter);
-        return adapter;
-    }
-
-    NotificationsAdapter(NotificationsDataSource dataSource) {
+    ResourceAdapter(DS dataSource) {
         super();
         mDataSource = dataSource;
     }
 
-    public NotificationsDataSource getDataSource() {
+    public DS getDataSource() {
         return mDataSource;
     }
 

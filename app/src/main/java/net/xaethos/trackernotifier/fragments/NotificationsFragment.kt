@@ -8,11 +8,12 @@ import android.support.v7.widget.helper.ItemTouchHelper
 import android.util.Log
 import android.view.*
 import net.xaethos.trackernotifier.R
-import net.xaethos.trackernotifier.adapters.NotificationsAdapter
 import net.xaethos.trackernotifier.adapters.NotificationsDataSource
 import net.xaethos.trackernotifier.adapters.NotificationsDividerDecorator
+import net.xaethos.trackernotifier.adapters.ResourceAdapter
 import net.xaethos.trackernotifier.api.TrackerClient
 import net.xaethos.trackernotifier.models.Notification
+import net.xaethos.trackernotifier.models.Resource
 import net.xaethos.trackernotifier.utils.Notifications
 import net.xaethos.trackernotifier.utils.animateVisible
 import rx.Observable
@@ -24,7 +25,7 @@ import rx.subscriptions.MultipleAssignmentSubscription
 class NotificationsFragment : BaseAdapterFragment() {
 
     private val apiClient: TrackerClient = TrackerClient.getInstance()
-    private val adapter: NotificationsAdapter = NotificationsAdapter.create()
+    private val adapter: ResourceAdapter<Resource, NotificationsDataSource> = NotificationsDataSource.createAdapter()
 
     private lateinit var dataSubscription: MultipleAssignmentSubscription
 
@@ -65,12 +66,10 @@ class NotificationsFragment : BaseAdapterFragment() {
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
-            R.id.action_refresh -> {
-                refresh()
-                return true
-            }
+            R.id.action_refresh -> refresh()
             else -> return super.onOptionsItemSelected(item)
         }
+        return true
     }
 
     override fun refresh() {
@@ -82,7 +81,8 @@ class NotificationsFragment : BaseAdapterFragment() {
         val emptyView = emptyView
         setEmptyText(R.string.msg_fetching_content, 0)
 
-        return apiClient.notifications.get().flatMap { Observable.from(it) }
+        return apiClient.notifications.get()
+                .flatMap { Observable.from(it) }
                 .filter { notification -> notification.read_at == null }
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())

@@ -12,9 +12,8 @@ import java.util.List;
 
 import rx.Observable;
 
-public class NotificationsDataSource implements DataSource {
+public class NotificationsDataSource extends ResourceDataSource<Resource> {
 
-    private Observer mObserver;
     private ArrayList<Item> mItems = new ArrayList<>(12);
 
     private static class Item {
@@ -28,14 +27,13 @@ public class NotificationsDataSource implements DataSource {
         }
     }
 
-    @Override
-    public void setObserver(Observer observer) {
-        mObserver = observer;
-    }
-
-    @Override
-    public long getItemId(int position) {
-        return getResource(position).hashCode();
+    public static ResourceAdapter<Resource, NotificationsDataSource> createAdapter() {
+        NotificationsDataSource dataSource = new NotificationsDataSource();
+        ResourceAdapter<Resource, NotificationsDataSource> adapter =
+                new ResourceAdapter<>(dataSource);
+        adapter.setHasStableIds(true);
+        dataSource.setObserver(adapter);
+        return adapter;
     }
 
     @Override
@@ -183,14 +181,6 @@ public class NotificationsDataSource implements DataSource {
             item.parentOffset -= delta;
             next += item.size;
         }
-    }
-
-    private void notifyItemRangeInserted(int positionStart, int itemCount) {
-        if (mObserver != null) mObserver.notifyItemRangeInserted(positionStart, itemCount);
-    }
-
-    private void notifyItemRangeRemoved(int positionStart, int itemCount) {
-        if (mObserver != null) mObserver.notifyItemRangeRemoved(positionStart, itemCount);
     }
 
 }

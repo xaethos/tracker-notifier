@@ -16,6 +16,7 @@ import android.widget.TextView;
 
 import net.xaethos.trackernotifier.api.TrackerClient;
 import net.xaethos.trackernotifier.fragments.BaseResourceFragment;
+import net.xaethos.trackernotifier.fragments.StoryCommentsFragment;
 import net.xaethos.trackernotifier.fragments.StoryDetailsFragment;
 import net.xaethos.trackernotifier.models.Story;
 import net.xaethos.trackernotifier.subscribers.ErrorToastSubscriber;
@@ -27,28 +28,27 @@ import rx.subjects.BehaviorSubject;
 public class StoryActivity extends AppCompatActivity
         implements BaseResourceFragment.ResourceSource<Story> {
 
+    private static final String EXTRA_PROJECT_ID = "net.xaethos.trackernotifier.projectId";
     private static final String EXTRA_STORY_ID = "net.xaethos.trackernotifier.storyId";
     private static final String EXTRA_STORY_HINT = "net.xaethos.trackernotifier.storyHint";
 
-    public static Intent forStory(Context context, Story story) {
+    public static Intent forStory(Context context, long projectId, Story story) {
         Intent intent = new Intent(context, StoryActivity.class);
+        intent.putExtra(EXTRA_PROJECT_ID, projectId);
         intent.putExtra(EXTRA_STORY_ID, story.id);
         intent.putExtra(EXTRA_STORY_HINT, story);
         return intent;
     }
 
-    public static Intent forStory(Context context, long storyId) {
-        Intent intent = new Intent(context, StoryActivity.class);
-        intent.putExtra(EXTRA_STORY_ID, storyId);
-        return intent;
-    }
-
+    long mProjectId;
+    long mStoryId;
     private final BehaviorSubject<Story> mStorySubject = BehaviorSubject.create();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        long storyId = getIntent().getLongExtra(EXTRA_STORY_ID, 0);
+        mProjectId = getIntent().getLongExtra(EXTRA_PROJECT_ID, 0);
+        mStoryId = getIntent().getLongExtra(EXTRA_STORY_ID, 0);
         Story storyHint = (Story) getIntent().getSerializableExtra(EXTRA_STORY_HINT);
 
         setContentView(R.layout.activity_story);
@@ -70,8 +70,14 @@ public class StoryActivity extends AppCompatActivity
         TabLayout tabBar = (TabLayout) findViewById(R.id.tab_bar);
         tabBar.setupWithViewPager(viewPager);
 
-        TrackerClient.getInstance().stories.show(storyId)
-                .observeOn(AndroidSchedulers.mainThread())
+        Observable<Story> storyObservable;
+        if (mProjectId == 0) {
+            storyObservable = TrackerClient.getInstance().stories.show(mStoryId);
+        } else {
+            storyObservable = TrackerClient.getInstance().stories.show(mProjectId, mStoryId);
+        }
+
+        storyObservable.observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new ErrorToastSubscriber<Story>(this) {
                     @Override
                     public void onNext(Story story) {
@@ -136,7 +142,7 @@ public class StoryActivity extends AppCompatActivity
                 fragment = new StoryDetailsFragment();
                 break;
             case 1:
-                fragment = new StoryDetailsFragment();
+                fragment = StoryCommentsFragment.newInstance(mProjectId);
                 break;
             default:
                 return null;
