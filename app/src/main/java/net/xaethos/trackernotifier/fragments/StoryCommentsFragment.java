@@ -21,7 +21,6 @@ import rx.android.schedulers.AndroidSchedulers;
 public class StoryCommentsFragment extends BaseResourceFragment<Story> {
 
     TrackerClient mApiClient;
-    View mEmptyView;
     ResourceAdapter<Comment, CommentsDataSource> mAdapter;
 
     long mProjectId;
@@ -54,12 +53,10 @@ public class StoryCommentsFragment extends BaseResourceFragment<Story> {
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         recyclerView.setAdapter(mAdapter);
 
-        mContentSubscription =
-                observeResource().flatMap((story) -> mApiClient.comments.get(mProjectId, story.id))
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe((comments -> {
-                            mAdapter.getDataSource().setComments(comments);
-                        }));
+        mContentSubscription = getResourceObservable()
+                .flatMap((story) -> mApiClient.comments.get(mProjectId, story.id))
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe((comments -> { mAdapter.getDataSource().setComments(comments); }));
 
         return root;
     }

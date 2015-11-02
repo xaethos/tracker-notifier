@@ -34,7 +34,7 @@ public class StoryDetailsFragment extends BaseResourceFragment<Story> {
         TextView nameView = (TextView) rootView.findViewById(R.id.text_name);
         TextView descriptionView = (TextView) rootView.findViewById(R.id.text_description);
 
-        mContentSubscription = observeResource().subscribe((story -> {
+        mContentSubscription = getResourceObservable().subscribe((story -> {
             idView.setText(story == null ? null : String.valueOf(story.id));
             pointsView.setText(
                     story == null ? null : new DecimalFormat("0.##").format(story.estimate));

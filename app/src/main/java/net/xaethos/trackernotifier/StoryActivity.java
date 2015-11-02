@@ -3,6 +3,7 @@ package net.xaethos.trackernotifier;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.design.widget.FloatingActionButton;
@@ -122,6 +123,7 @@ public class StoryActivity extends AppCompatActivity
         }
     }
 
+    @NonNull
     @Override
     public Observable<Story> getResourceObservable() {
         return mStorySubject.asObservable();
