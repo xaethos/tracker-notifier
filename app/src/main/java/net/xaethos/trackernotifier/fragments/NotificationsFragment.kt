@@ -13,21 +13,18 @@ import net.xaethos.trackernotifier.adapters.NotificationsDividerDecorator
 import net.xaethos.trackernotifier.api.TrackerClient
 import net.xaethos.trackernotifier.models.Notification
 import net.xaethos.trackernotifier.utils.Notifications
-import net.xaethos.trackernotifier.utils.animateVisible
 import rx.Observable
 import rx.Subscription
 import rx.android.schedulers.AndroidSchedulers
 import rx.schedulers.Schedulers
 import rx.subscriptions.MultipleAssignmentSubscription
-import rx.subscriptions.Subscriptions
 
 class NotificationsFragment : BaseAdapterFragment() {
 
     private val apiClient: TrackerClient = TrackerClient.getInstance()
-    private val adapter: NotificationsAdapter = NotificationsAdapter()
+    protected override val adapter: NotificationsAdapter = NotificationsAdapter()
 
     private lateinit var dataSubscription: MultipleAssignmentSubscription
-    private var emptyViewSubscription: Subscription? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -53,13 +50,6 @@ class NotificationsFragment : BaseAdapterFragment() {
         recyclerView?.addItemDecoration(NotificationsDividerDecorator(context))
         recyclerView?.adapter = adapter
         ItemTouchHelper(SwipeCallback()).attachToRecyclerView(recyclerView)
-
-        emptyViewSubscription = subscribeEmptyView()
-    }
-
-    override fun onDestroyView() {
-        emptyViewSubscription?.unsubscribe()
-        super.onDestroyView()
     }
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
@@ -83,29 +73,6 @@ class NotificationsFragment : BaseAdapterFragment() {
     override fun refresh() {
         dataSubscription.set(subscribeAdapter())
     }
-
-    private fun adapterCountObservable() = Observable.create<Int> { subscriber ->
-        val dataObserver = object : RecyclerView.AdapterDataObserver() {
-            override fun onChanged() {
-                if (!subscriber.isUnsubscribed) subscriber.onNext(adapter.itemCount)
-            }
-
-            override fun onItemRangeInserted(positionStart: Int, itemCount: Int) {
-                if (!subscriber.isUnsubscribed) subscriber.onNext(adapter.itemCount)
-            }
-
-            override fun onItemRangeRemoved(positionStart: Int, itemCount: Int) {
-                if (!subscriber.isUnsubscribed) subscriber.onNext(adapter.itemCount)
-            }
-        }
-        adapter.registerAdapterDataObserver(dataObserver)
-        subscriber.add(Subscriptions.create { adapter.unregisterAdapterDataObserver(dataObserver) })
-    }
-
-    private fun subscribeEmptyView() = adapterCountObservable()
-            .map { it == 0 }
-            .distinctUntilChanged()
-            .subscribe { isEmpty -> emptyView.animateVisible(visible = isEmpty) }
 
     private fun subscribeAdapter(): Subscription {
         refreshView?.isRefreshing = true
