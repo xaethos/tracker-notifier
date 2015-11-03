@@ -2,8 +2,10 @@ package net.xaethos.trackernotifier.adapters
 
 import android.support.v7.widget.RecyclerView
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
 import net.xaethos.trackernotifier.R
+import net.xaethos.trackernotifier.StoryActivity
 
 import net.xaethos.trackernotifier.models.Notification
 import net.xaethos.trackernotifier.models.Resource
@@ -11,26 +13,39 @@ import net.xaethos.trackernotifier.models.Story
 import rx.Observable
 import java.util.*
 
-class NotificationsAdapter : RecyclerView.Adapter<ResourceViewHolder>() {
+class NotificationsAdapter : RecyclerView.Adapter<ResourceViewHolder>(), View.OnClickListener {
 
     private class Item(val resource: Resource, var parentOffset: Int, var size: Int = 1)
 
     private val items = ArrayList<Item>(12)
 
-    private var layoutInflater: LayoutInflater? = null
+    private var recyclerView: RecyclerView? = null
 
     override fun onAttachedToRecyclerView(recyclerView: RecyclerView) {
-        layoutInflater = LayoutInflater.from(recyclerView.context)
         super.onAttachedToRecyclerView(recyclerView)
+        this.recyclerView = recyclerView
     }
 
     override fun onDetachedFromRecyclerView(recyclerView: RecyclerView) {
+        this.recyclerView = null
         super.onDetachedFromRecyclerView(recyclerView)
-        layoutInflater = null
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ResourceViewHolder {
-        return ResourceViewHolder.create(layoutInflater, viewType, parent)
+        val itemView = LayoutInflater.from(parent.context).inflate(viewType, parent, false)
+
+        val viewHolder = when (viewType) {
+            R.layout.item_notification -> NotificationViewHolder(itemView)
+            R.layout.item_story -> StoryViewHolder(itemView)
+            R.layout.item_project -> ProjectViewHolder(itemView)
+            else -> throw IllegalArgumentException("unknown view type")
+        }
+
+        if (viewType in intArrayOf(R.layout.item_notification, R.layout.item_story)) {
+            itemView.setOnClickListener(this)
+        }
+
+        return viewHolder
     }
 
     override fun onBindViewHolder(holder: ResourceViewHolder, position: Int) {
@@ -47,6 +62,30 @@ class NotificationsAdapter : RecyclerView.Adapter<ResourceViewHolder>() {
         is Notification -> R.layout.item_notification
         is Story -> R.layout.item_story
         else -> R.layout.item_project
+    }
+
+    override fun onClick(v: View) {
+        val position = recyclerView?.getChildAdapterPosition(v) ?: RecyclerView.NO_POSITION
+        if (position == RecyclerView.NO_POSITION) return
+
+        val projectId: Long
+        val story: Story
+        val resource = get(position)
+
+        when (resource) {
+            is Notification -> {
+                story = resource.story
+                projectId = resource.project.id
+            }
+            is Story -> {
+                story = resource
+                val projectPosition = position + items[position].parentOffset
+                projectId = items[projectPosition].resource.id
+            }
+            else -> return
+        }
+        val context = v.context
+        context.startActivity(StoryActivity.forStory(context, projectId, story))
     }
 
     fun addNotification(notification: Notification) =

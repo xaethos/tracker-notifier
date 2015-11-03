@@ -7,7 +7,7 @@ import android.view.ViewGroup;
 import net.xaethos.trackernotifier.models.Resource;
 
 public class ResourceAdapter<R extends Resource, DS extends ResourceDataSource<R>>
-        extends RecyclerView.Adapter<ResourceViewHolder> implements DataSource.Observer {
+        extends RecyclerView.Adapter<CommentViewHolder> implements DataSource.Observer {
 
     private LayoutInflater mLayoutInflater;
     private final DS mDataSource;
@@ -34,12 +34,12 @@ public class ResourceAdapter<R extends Resource, DS extends ResourceDataSource<R
     }
 
     @Override
-    public ResourceViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        return ResourceViewHolder.create(mLayoutInflater, viewType, parent);
+    public CommentViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+        return new CommentViewHolder(mLayoutInflater.inflate(viewType, parent, false));
     }
 
     @Override
-    public void onBindViewHolder(ResourceViewHolder holder, int position) {
+    public void onBindViewHolder(CommentViewHolder holder, int position) {
         holder.bind(mDataSource.getResource(position));
     }
 
