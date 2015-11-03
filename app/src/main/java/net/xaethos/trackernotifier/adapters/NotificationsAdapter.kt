@@ -8,12 +8,13 @@ import net.xaethos.trackernotifier.R
 import net.xaethos.trackernotifier.StoryActivity
 
 import net.xaethos.trackernotifier.models.Notification
+import net.xaethos.trackernotifier.models.Project
 import net.xaethos.trackernotifier.models.Resource
 import net.xaethos.trackernotifier.models.Story
 import rx.Observable
 import java.util.*
 
-class NotificationsAdapter : RecyclerView.Adapter<ResourceViewHolder>(), View.OnClickListener {
+class NotificationsAdapter : RecyclerView.Adapter<ResourceViewHolder<out Resource>>(), View.OnClickListener {
 
     private class Item(val resource: Resource, var parentOffset: Int, var size: Int = 1)
 
@@ -31,7 +32,7 @@ class NotificationsAdapter : RecyclerView.Adapter<ResourceViewHolder>(), View.On
         super.onDetachedFromRecyclerView(recyclerView)
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ResourceViewHolder {
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ResourceViewHolder<out Resource> {
         val itemView = LayoutInflater.from(parent.context).inflate(viewType, parent, false)
 
         val viewHolder = when (viewType) {
@@ -48,8 +49,14 @@ class NotificationsAdapter : RecyclerView.Adapter<ResourceViewHolder>(), View.On
         return viewHolder
     }
 
-    override fun onBindViewHolder(holder: ResourceViewHolder, position: Int) {
-        holder.bind(get(position));
+    override fun onBindViewHolder(holder: ResourceViewHolder<out Resource>, position: Int) {
+        val resource = get(position)
+        when (holder) {
+            is NotificationViewHolder -> holder.bind(resource as Notification)
+            is StoryViewHolder -> holder.bind(resource as Story)
+            is ProjectViewHolder -> holder.bind(resource as Project)
+            else -> throw IllegalStateException("invalid ViewHolder for resource")
+        }
     }
 
     operator fun get(i: Int) = items[i].resource

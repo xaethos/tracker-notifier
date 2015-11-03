@@ -144,7 +144,7 @@ public class StoryActivity extends AppCompatActivity
                 fragment = new StoryDetailsFragment();
                 break;
             case 1:
-                fragment = StoryCommentsFragment.newInstance(mProjectId);
+                fragment = StoryCommentsFragment.Companion.newInstance(mProjectId);
                 break;
             default:
                 return null;

@@ -8,18 +8,15 @@ import net.xaethos.trackernotifier.R
 import net.xaethos.trackernotifier.models.*
 import net.xaethos.trackernotifier.utils.empty
 
-abstract class ResourceViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+abstract class ResourceViewHolder<T : Resource>(itemView: View) : RecyclerView.ViewHolder(itemView) {
     val title = itemView.findViewById(R.id.title) as TextView
-
-    abstract fun bind(item: Resource)
+    abstract fun bind(item: T)
 }
 
-class NotificationViewHolder(itemView: View) : ResourceViewHolder(itemView) {
+class NotificationViewHolder(itemView: View) : ResourceViewHolder<Notification>(itemView) {
     val summary = itemView.findViewById(R.id.summary) as TextView
 
-    override fun bind(item: Resource) {
-        if (item !is Notification) throw IllegalArgumentException("must bind to notification")
-
+    override fun bind(item: Notification) {
         title.text = item.message
 
         if (item.context.empty) {
@@ -31,11 +28,10 @@ class NotificationViewHolder(itemView: View) : ResourceViewHolder(itemView) {
     }
 }
 
-class StoryViewHolder(itemView: View) : ResourceViewHolder(itemView) {
+class StoryViewHolder(itemView: View) : ResourceViewHolder<Story>(itemView) {
     val icon = itemView.findViewById(R.id.icon) as ImageView
 
-    override fun bind(item: Resource) {
-        if (item !is Story) throw IllegalArgumentException("must bind to story")
+    override fun bind(item: Story) {
         title.text = item.name
         when (item.story_type) {
             Story.TYPE_FEATURE -> icon.setImageResource(R.drawable.ic_star_black_18dp)
@@ -47,16 +43,14 @@ class StoryViewHolder(itemView: View) : ResourceViewHolder(itemView) {
     }
 }
 
-class ProjectViewHolder(itemView: View) : ResourceViewHolder(itemView) {
-    override fun bind(item: Resource) {
-        if (item !is Project) throw IllegalArgumentException("must bind to project")
+class ProjectViewHolder(itemView: View) : ResourceViewHolder<Project>(itemView) {
+    override fun bind(item: Project) {
         title.text = item.name
     }
 }
 
-class CommentViewHolder(itemView: View) : ResourceViewHolder(itemView) {
-    override fun bind(item: Resource) {
-        if (item !is Comment) throw IllegalArgumentException("must bind to comment")
+class CommentViewHolder(itemView: View) : ResourceViewHolder<Comment>(itemView) {
+    override fun bind(item: Comment) {
         title.text = item.text
     }
 }
