@@ -15,7 +15,7 @@ import rx.Subscription
 import rx.android.schedulers.AndroidSchedulers
 
 class StoryCommentsFragment : BaseResourceFragment<Story>() {
-    private val apiClient = TrackerClient.getInstance()
+    private val apiClient = TrackerClient.instance
 
     private val adapter = ResourceAdapter(R.layout.item_comment) { inflater, viewType, parent ->
         CommentViewHolder(inflater.inflate(viewType, parent, false))

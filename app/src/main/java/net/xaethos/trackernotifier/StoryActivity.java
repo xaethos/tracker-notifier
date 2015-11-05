@@ -73,9 +73,10 @@ public class StoryActivity extends AppCompatActivity
 
         Observable<Story> storyObservable;
         if (mProjectId == 0) {
-            storyObservable = TrackerClient.getInstance().stories.show(mStoryId);
+            storyObservable = TrackerClient.Companion.getInstance().getStories().show(mStoryId);
         } else {
-            storyObservable = TrackerClient.getInstance().stories.show(mProjectId, mStoryId);
+            storyObservable =
+                    TrackerClient.Companion.getInstance().getStories().show(mProjectId, mStoryId);
         }
 
         storyObservable.observeOn(AndroidSchedulers.mainThread())

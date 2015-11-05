@@ -12,7 +12,7 @@ import net.xaethos.trackernotifier.adapters.NotificationsAdapter
 import net.xaethos.trackernotifier.adapters.NotificationsDividerDecorator
 import net.xaethos.trackernotifier.api.TrackerClient
 import net.xaethos.trackernotifier.models.Notification
-import net.xaethos.trackernotifier.utils.Notifications
+import net.xaethos.trackernotifier.utils.markRead
 import rx.Observable
 import rx.Subscription
 import rx.android.schedulers.AndroidSchedulers
@@ -21,7 +21,7 @@ import rx.subscriptions.MultipleAssignmentSubscription
 
 class NotificationsFragment : BaseAdapterFragment() {
 
-    private val apiClient: TrackerClient = TrackerClient.getInstance()
+    private val apiClient: TrackerClient = TrackerClient.instance
     protected override val adapter: NotificationsAdapter = NotificationsAdapter()
 
     private lateinit var dataSubscription: MultipleAssignmentSubscription
@@ -104,10 +104,10 @@ class NotificationsFragment : BaseAdapterFragment() {
 
                 // User didn't undo the swipe, so actually mark notifications read
                 readItems.forEach { notification ->
-                    Notifications.markRead(apiClient, notification.id)
-                            .subscribe({ n -> Log.i("XAE", "notification read: " + n.id) },
+                    apiClient.notifications.markRead(notification.id)
+                            .subscribe({ Log.i("Quicker", "notification read: ${it.id}") },
                                     { error ->
-                                        Log.d("XAE", "markRead error", error)
+                                        Log.d("Quicker", "markRead error", error)
                                         adapter.addNotification(notification)
                                     })
                 }
