@@ -1,9 +1,9 @@
 package net.xaethos.trackernotifier.api
 
-import android.util.Log
 import com.squareup.okhttp.Interceptor
 import com.squareup.okhttp.Response
 import net.xaethos.trackernotifier.BuildConfig
+import net.xaethos.trackernotifier.utils.Log
 import net.xaethos.trackernotifier.utils.empty
 import retrofit.MoshiConverterFactory
 import retrofit.Retrofit
@@ -46,13 +46,11 @@ class TrackerClient internal constructor(retrofit: Retrofit) {
         override fun intercept(chain: Interceptor.Chain): Response {
             val request = chain.request()
             val startTime = System.nanoTime()
-            Log.v("TrackerClient",
-                    "Sending request ${request.method()} ${request.url()}\n${request.headers()}")
+            Log.v { "Sending request ${request.method()} ${request.url()}\n${request.headers()}" }
 
             val response = chain.proceed(request)
             val elapsed = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime)
-            Log.v("TrackerClient",
-                    "Received response for ${request.url()} in ${elapsed}ms\n${response.headers()}")
+            Log.v { "Received response for ${request.url()} in ${elapsed}ms\n${response.headers()}" }
 
             return response
         }

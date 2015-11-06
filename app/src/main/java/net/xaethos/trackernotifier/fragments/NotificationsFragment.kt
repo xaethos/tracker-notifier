@@ -5,13 +5,13 @@ import android.support.design.widget.Snackbar
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
 import android.support.v7.widget.helper.ItemTouchHelper
-import android.util.Log
 import android.view.*
 import net.xaethos.trackernotifier.R
 import net.xaethos.trackernotifier.adapters.NotificationsAdapter
 import net.xaethos.trackernotifier.adapters.NotificationsDividerDecorator
 import net.xaethos.trackernotifier.api.TrackerClient
 import net.xaethos.trackernotifier.models.Notification
+import net.xaethos.trackernotifier.utils.Log
 import net.xaethos.trackernotifier.utils.markRead
 import rx.Observable
 import rx.Subscription
@@ -105,11 +105,13 @@ class NotificationsFragment : BaseAdapterFragment() {
                 // User didn't undo the swipe, so actually mark notifications read
                 readItems.forEach { notification ->
                     apiClient.notifications.markRead(notification.id)
-                            .subscribe({ Log.i("Quicker", "notification read: ${it.id}") },
+                            .subscribe(
+                                    { Log.i { "notification marked read: ${it.id}" } },
                                     { error ->
-                                        Log.d("Quicker", "markRead error", error)
+                                        Log.w(error) { "markRead error" }
                                         adapter.addNotification(notification)
-                                    })
+                                    }
+                            )
                 }
             }
         }).setAction(R.string.action_undo) { readItems.subscribe { adapter.addNotification(it) } }.show()
