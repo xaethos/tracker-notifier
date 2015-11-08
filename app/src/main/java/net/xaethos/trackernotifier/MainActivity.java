@@ -24,12 +24,12 @@ public class MainActivity extends AppCompatActivity {
         mNotificationsFragment =
                 (NotificationsFragment) getSupportFragmentManager().findFragmentById(R.id.fragment);
 
-        if (!TrackerClient.getInstance().hasToken()) {
+        if (!TrackerClient.Companion.getInstance().hasToken()) {
             PreferencesManager prefs = PreferencesManager.getInstance(this);
             if (!prefs.hasTrackerToken()) {
                 startActivityForResult(new Intent(this, LoginActivity.class), REQUEST_LOGIN);
             } else {
-                TrackerClient.getInstance().setToken(prefs.getTrackerToken());
+                TrackerClient.Companion.getInstance().setToken(prefs.getTrackerToken());
             }
         }
     }
@@ -57,7 +57,7 @@ public class MainActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
         case R.id.action_logout:
-            TrackerClient.getInstance().setToken(null);
+            TrackerClient.Companion.getInstance().setToken(null);
             PreferencesManager.getInstance(this).setTrackerToken(null);
             startActivityForResult(new Intent(this, LoginActivity.class), REQUEST_LOGIN);
             return true;

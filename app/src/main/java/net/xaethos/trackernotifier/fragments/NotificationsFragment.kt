@@ -5,16 +5,14 @@ import android.support.design.widget.Snackbar
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
 import android.support.v7.widget.helper.ItemTouchHelper
-import android.util.Log
 import android.view.*
 import net.xaethos.trackernotifier.R
 import net.xaethos.trackernotifier.adapters.NotificationsAdapter
-import net.xaethos.trackernotifier.adapters.NotificationsDataSource
 import net.xaethos.trackernotifier.adapters.NotificationsDividerDecorator
 import net.xaethos.trackernotifier.api.TrackerClient
 import net.xaethos.trackernotifier.models.Notification
-import net.xaethos.trackernotifier.utils.Notifications
-import net.xaethos.trackernotifier.utils.animateVisible
+import net.xaethos.trackernotifier.utils.Log
+import net.xaethos.trackernotifier.utils.markRead
 import rx.Observable
 import rx.Subscription
 import rx.android.schedulers.AndroidSchedulers
@@ -23,8 +21,8 @@ import rx.subscriptions.MultipleAssignmentSubscription
 
 class NotificationsFragment : BaseAdapterFragment() {
 
-    private val apiClient: TrackerClient = TrackerClient.getInstance()
-    private val adapter: NotificationsAdapter = NotificationsAdapter.create()
+    private val apiClient: TrackerClient = TrackerClient.instance
+    protected override val adapter: NotificationsAdapter = NotificationsAdapter()
 
     private lateinit var dataSubscription: MultipleAssignmentSubscription
 
@@ -47,6 +45,7 @@ class NotificationsFragment : BaseAdapterFragment() {
 
     override fun onViewCreated(view: View?, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
         recyclerView?.layoutManager = LinearLayoutManager(context)
         recyclerView?.addItemDecoration(NotificationsDividerDecorator(context))
         recyclerView?.adapter = adapter
@@ -65,44 +64,29 @@ class NotificationsFragment : BaseAdapterFragment() {
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
-            R.id.action_refresh -> {
-                refresh()
-                return true
-            }
+            R.id.action_refresh -> refresh()
             else -> return super.onOptionsItemSelected(item)
         }
+        return true
     }
 
     override fun refresh() {
-        dataSubscription.set(subscribeDataSource(adapter.dataSource))
+        dataSubscription.set(subscribeAdapter())
     }
 
-    private fun subscribeDataSource(dataSource: NotificationsDataSource): Subscription {
+    private fun subscribeAdapter(): Subscription {
         refreshView?.isRefreshing = true
-        val emptyView = emptyView
         setEmptyText(R.string.msg_fetching_content, 0)
 
-        return apiClient.notifications.get().flatMap { Observable.from(it) }
+        return apiClient.notifications.get()
+                .flatMap { Observable.from(it) }
                 .filter { notification -> notification.read_at == null }
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .doOnTerminate { refreshView?.isRefreshing = false }
-                .subscribe({ notification ->
-                    dataSource.addNotification(notification)
-                    if (emptyView != null) animateVisible(emptyView, false)
-                }, { error ->
-                    setEmptyText("Error", error.message)
-                }, {
-                    if (emptyView != null) {
-                        if (dataSource.itemCount == 0) {
-                            setEmptyText(R.string.headline_no_notifications,
-                                    R.string.msg_pull_to_refresh)
-                            animateVisible(emptyView, true)
-                        } else {
-                            animateVisible(emptyView, false)
-                        }
-                    }
-                })
+                .subscribe({ notification -> adapter.addNotification(notification) },
+                        { error -> setEmptyText(getString(R.string.headline_error), error.message) },
+                        { setEmptyText(R.string.headline_no_notifications, R.string.msg_pull_to_refresh) })
     }
 
     private fun markAsRead(notifications: List<Notification>) {
@@ -112,7 +96,6 @@ class NotificationsFragment : BaseAdapterFragment() {
         val count = notifications.size
         val message = context.resources.getQuantityString(R.plurals.toast_notifications_read, count, count)
 
-        val dataSource = adapter.dataSource
         val readItems = Observable.from(notifications)
 
         Snackbar.make(container, message, Snackbar.LENGTH_LONG).setCallback(object : Snackbar.Callback() {
@@ -121,15 +104,17 @@ class NotificationsFragment : BaseAdapterFragment() {
 
                 // User didn't undo the swipe, so actually mark notifications read
                 readItems.forEach { notification ->
-                    Notifications.markRead(apiClient, notification.id)
-                            .subscribe({ n -> Log.i("XAE", "notification read: " + n.id) },
+                    apiClient.notifications.markRead(notification.id)
+                            .subscribe(
+                                    { Log.i { "notification marked read: ${it.id}" } },
                                     { error ->
-                                        Log.d("XAE", "markRead error", error)
-                                        dataSource.addNotification(notification)
-                                    })
+                                        Log.w(error) { "markRead error" }
+                                        adapter.addNotification(notification)
+                                    }
+                            )
                 }
             }
-        }).setAction(R.string.action_undo) { readItems.subscribe { dataSource.addNotification(it) } }.show()
+        }).setAction(R.string.action_undo) { readItems.subscribe { adapter.addNotification(it) } }.show()
     }
 
     private inner class SwipeCallback : ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT) {
@@ -145,7 +130,7 @@ class NotificationsFragment : BaseAdapterFragment() {
             val position = viewHolder.adapterPosition
             if (position == RecyclerView.NO_POSITION) return
 
-            val removed = adapter.dataSource.removeItem(position)
+            val removed = adapter.removeItem(position)
             markAsRead(removed)
         }
     }

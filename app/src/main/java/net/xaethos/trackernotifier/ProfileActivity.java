@@ -27,7 +27,7 @@ public class ProfileActivity extends AppCompatActivity {
         setContentView(R.layout.activity_profile);
 
         mSubscription = new MultipleAssignmentSubscription();
-        mClient = TrackerClient.getInstance();
+        mClient = TrackerClient.Companion.getInstance();
         if (mClient.hasToken()) {
             mSubscription.set(subscribeViews());
         } else {
@@ -58,7 +58,8 @@ public class ProfileActivity extends AppCompatActivity {
         final TextView nameView = (TextView) findViewById(R.id.text_name);
         final TextView initialsView = (TextView) findViewById(R.id.text_initials);
 
-        return mClient.me.get()
+        return mClient.getMe()
+                .get()
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new ErrorToastSubscriber<Me>(this) {

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="net.xaethos.trackernotifier">
+<manifest package="net.xaethos.trackernotifier"
+    xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.INTERNET" />
 
@@ -28,7 +28,7 @@
             android:windowSoftInputMode="adjustResize|stateVisible" />
         <activity
             android:name=".StoryActivity"
-            android:label="@string/title_activity_story"
+            android:label="@string/title_fragment_story_details"
             android:parentActivityName=".MainActivity"
             android:theme="@style/AppTheme.NoActionBar">
             <meta-data

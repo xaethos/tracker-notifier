@@ -3,45 +3,53 @@ package net.xaethos.trackernotifier;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.design.widget.TabLayout;
+import android.support.v4.app.FragmentPagerAdapter;
+import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.view.View;
 import android.widget.TextView;
 
 import net.xaethos.trackernotifier.api.TrackerClient;
+import net.xaethos.trackernotifier.fragments.BaseResourceFragment;
+import net.xaethos.trackernotifier.fragments.StoryCommentsFragment;
+import net.xaethos.trackernotifier.fragments.StoryDetailsFragment;
 import net.xaethos.trackernotifier.models.Story;
 import net.xaethos.trackernotifier.subscribers.ErrorToastSubscriber;
 
-import java.text.DecimalFormat;
-
+import rx.Observable;
 import rx.android.schedulers.AndroidSchedulers;
+import rx.subjects.BehaviorSubject;
 
-public class StoryActivity extends AppCompatActivity {
+public class StoryActivity extends AppCompatActivity
+        implements BaseResourceFragment.ResourceSource<Story> {
 
+    private static final String EXTRA_PROJECT_ID = "net.xaethos.trackernotifier.projectId";
     private static final String EXTRA_STORY_ID = "net.xaethos.trackernotifier.storyId";
     private static final String EXTRA_STORY_HINT = "net.xaethos.trackernotifier.storyHint";
 
-    public static Intent forStory(Context context, Story story) {
+    public static Intent forStory(Context context, long projectId, Story story) {
         Intent intent = new Intent(context, StoryActivity.class);
+        intent.putExtra(EXTRA_PROJECT_ID, projectId);
         intent.putExtra(EXTRA_STORY_ID, story.id);
         intent.putExtra(EXTRA_STORY_HINT, story);
         return intent;
     }
 
-    public static Intent forStory(Context context, long storyId) {
-        Intent intent = new Intent(context, StoryActivity.class);
-        intent.putExtra(EXTRA_STORY_ID, storyId);
-        return intent;
-    }
+    long mProjectId;
+    long mStoryId;
+    private final BehaviorSubject<Story> mStorySubject = BehaviorSubject.create();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        long storyId = getIntent().getLongExtra(EXTRA_STORY_ID, 0);
+        mProjectId = getIntent().getLongExtra(EXTRA_PROJECT_ID, 0);
+        mStoryId = getIntent().getLongExtra(EXTRA_STORY_ID, 0);
         Story storyHint = (Story) getIntent().getSerializableExtra(EXTRA_STORY_HINT);
 
         setContentView(R.layout.activity_story);
@@ -52,18 +60,31 @@ public class StoryActivity extends AppCompatActivity {
         setSupportActionBar((Toolbar) toolbarLayout.findViewById(R.id.toolbar));
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
-        View contentView = findViewById(R.id.content_story);
-
         setupAppBar(toolbarLayout, storyHint);
         //setupFab((FloatingActionButton) findViewById(R.id.fab));
 
-        TrackerClient.getInstance().stories.show(storyId)
-                .observeOn(AndroidSchedulers.mainThread())
+        SectionsPagerAdapter adapter = new SectionsPagerAdapter();
+
+        ViewPager viewPager = (ViewPager) findViewById(R.id.pager);
+        viewPager.setAdapter(adapter);
+
+        TabLayout tabBar = (TabLayout) findViewById(R.id.tab_bar);
+        tabBar.setupWithViewPager(viewPager);
+
+        Observable<Story> storyObservable;
+        if (mProjectId == 0) {
+            storyObservable = TrackerClient.Companion.getInstance().getStories().show(mStoryId);
+        } else {
+            storyObservable =
+                    TrackerClient.Companion.getInstance().getStories().show(mProjectId, mStoryId);
+        }
+
+        storyObservable.observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new ErrorToastSubscriber<Story>(this) {
                     @Override
                     public void onNext(Story story) {
+                        mStorySubject.onNext(story);
                         setupAppBar(toolbarLayout, story);
-                        setupContent(contentView, storyHint);
                     }
                 });
     }
@@ -78,22 +99,6 @@ public class StoryActivity extends AppCompatActivity {
 
         TextView stateView = (TextView) findViewById(R.id.text_state);
         stateView.setText(story == null ? null : story.current_state);
-    }
-
-    private void setupContent(View contentView, @Nullable Story story) {
-        TextView valueView;
-
-        valueView = (TextView) contentView.findViewById(R.id.text_id);
-        valueView.setText(story == null ? null : String.valueOf(story.id));
-
-        valueView = (TextView) contentView.findViewById(R.id.text_points);
-        valueView.setText(story == null ? null : new DecimalFormat("0.##").format(story.estimate));
-
-        valueView = (TextView) contentView.findViewById(R.id.text_name);
-        valueView.setText(story == null ? null : story.name);
-
-        valueView = (TextView) contentView.findViewById(R.id.text_description);
-        valueView.setText(story == null ? null : story.description);
     }
 
     private void setupFab(FloatingActionButton fab) {
@@ -118,4 +123,51 @@ public class StoryActivity extends AppCompatActivity {
             return 0;
         }
     }
+
+    @NonNull
+    @Override
+    public Observable<Story> getResourceObservable() {
+        return mStorySubject.asObservable();
+    }
+
+    private class SectionsPagerAdapter extends FragmentPagerAdapter {
+
+        public SectionsPagerAdapter() {
+            super(getSupportFragmentManager());
+        }
+
+        @Override
+        public BaseResourceFragment getItem(int position) {
+            // getItem is called to instantiate the fragment for the given page.
+            BaseResourceFragment fragment;
+            switch (position) {
+            case 0:
+                fragment = new StoryDetailsFragment();
+                break;
+            case 1:
+                fragment = StoryCommentsFragment.Companion.newInstance(mProjectId);
+                break;
+            default:
+                return null;
+            }
+            return fragment;
+        }
+
+        @Override
+        public int getCount() {
+            return 2;
+        }
+
+        @Override
+        public CharSequence getPageTitle(int position) {
+            switch (position) {
+            case 0:
+                return getString(R.string.title_fragment_story_details);
+            case 1:
+                return getString(R.string.title_fragment_story_comments);
+            }
+            return null;
+        }
+    }
+
 }

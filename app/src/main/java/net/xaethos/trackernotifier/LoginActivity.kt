@@ -8,9 +8,9 @@ import android.view.inputmethod.EditorInfo
 import android.widget.EditText
 import android.widget.Toast
 import net.xaethos.trackernotifier.api.TrackerClient
-import net.xaethos.trackernotifier.models.Me
-import net.xaethos.trackernotifier.subscribers.ErrorToastSubscriber
+import net.xaethos.trackernotifier.subscribers.toastError
 import net.xaethos.trackernotifier.utils.PreferencesManager
+import net.xaethos.trackernotifier.utils.login
 import net.xaethos.trackernotifier.utils.switchVisible
 import rx.Subscription
 import rx.android.schedulers.AndroidSchedulers
@@ -99,27 +99,22 @@ class LoginActivity : Activity() {
         showProgress(true)
 
         val prefs = PreferencesManager.getInstance(this)
-        val trackerClient = TrackerClient.getInstance()
+        val trackerClient = TrackerClient.instance
 
-        loginSubscription = trackerClient.login(accountName, password)
+        loginSubscription = trackerClient.me.login(accountName, password)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(object : ErrorToastSubscriber<Me>(this) {
-                    override fun onNext(user: Me) {
-                        Toast.makeText(this@LoginActivity,
-                                "Welcome back " + user.name,
-                                Toast.LENGTH_LONG).show()
+                .subscribe({ user ->
+                    Toast.makeText(this@LoginActivity,
+                            "Welcome back " + user.name, Toast.LENGTH_LONG).show()
 
-                        trackerClient.setToken(user.api_token)
-                        prefs.trackerToken = user.api_token
-                        setResult(Activity.RESULT_OK)
-                        finish()
-                    }
-
-                    override fun onError(error: Throwable) {
-                        showProgress(false)
-                        super.onError(error)
-                    }
+                    trackerClient.setToken(user.api_token)
+                    prefs.trackerToken = user.api_token
+                    setResult(Activity.RESULT_OK)
+                    finish()
+                }, { error ->
+                    showProgress(false)
+                    this@LoginActivity.toastError(error)
                 })
     }
 
