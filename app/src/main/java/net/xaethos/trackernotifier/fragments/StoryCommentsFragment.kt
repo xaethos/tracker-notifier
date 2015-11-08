@@ -9,6 +9,7 @@ import android.view.ViewGroup
 import net.xaethos.trackernotifier.R
 import net.xaethos.trackernotifier.adapters.CommentViewHolder
 import net.xaethos.trackernotifier.adapters.ResourceAdapter
+import net.xaethos.trackernotifier.adapters.SimpleDividerDecorator
 import net.xaethos.trackernotifier.api.TrackerClient
 import net.xaethos.trackernotifier.models.Story
 import rx.Subscription
@@ -35,6 +36,7 @@ class StoryCommentsFragment : BaseResourceFragment<Story>() {
 
         val recyclerView = root.findViewById(android.R.id.list) as RecyclerView
         recyclerView.layoutManager = LinearLayoutManager(context)
+        recyclerView.addItemDecoration(SimpleDividerDecorator(root.context))
         recyclerView.adapter = adapter
 
         contentSubscription = resourceObservable!!
