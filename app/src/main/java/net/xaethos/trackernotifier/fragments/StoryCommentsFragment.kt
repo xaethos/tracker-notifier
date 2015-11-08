@@ -40,7 +40,7 @@ class StoryCommentsFragment : BaseResourceFragment<Story>() {
         recyclerView.adapter = adapter
 
         contentSubscription = resourceObservable!!
-                .flatMap { story -> apiClient.comments.get(projectId, story.id) }
+                .flatMap { story -> apiClient.comments.get(projectId, story.id, ":default,person(name,username,initials)") }
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(({ comments -> adapter.setResources(comments) }))
 

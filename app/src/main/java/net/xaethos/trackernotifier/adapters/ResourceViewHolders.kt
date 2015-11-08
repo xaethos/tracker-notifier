@@ -9,11 +9,11 @@ import net.xaethos.trackernotifier.models.*
 import net.xaethos.trackernotifier.utils.empty
 
 abstract class ResourceViewHolder<T : Resource>(itemView: View) : RecyclerView.ViewHolder(itemView) {
-    val title = itemView.findViewById(R.id.title) as TextView
     abstract fun bind(item: T)
 }
 
 class NotificationViewHolder(itemView: View) : ResourceViewHolder<Notification>(itemView) {
+    val title = itemView.findViewById(R.id.title) as TextView
     val summary = itemView.findViewById(R.id.summary) as TextView
 
     override fun bind(item: Notification) {
@@ -29,6 +29,7 @@ class NotificationViewHolder(itemView: View) : ResourceViewHolder<Notification>(
 }
 
 class StoryViewHolder(itemView: View) : ResourceViewHolder<Story>(itemView) {
+    val title = itemView.findViewById(R.id.title) as TextView
     val icon = itemView.findViewById(R.id.icon) as ImageView
 
     override fun bind(item: Story) {
@@ -44,13 +45,26 @@ class StoryViewHolder(itemView: View) : ResourceViewHolder<Story>(itemView) {
 }
 
 class ProjectViewHolder(itemView: View) : ResourceViewHolder<Project>(itemView) {
+    val title = itemView.findViewById(R.id.title) as TextView
+
     override fun bind(item: Project) {
         title.text = item.name
     }
 }
 
 class CommentViewHolder(itemView: View) : ResourceViewHolder<Comment>(itemView) {
+    val initials = itemView.findViewById(R.id.person_initials) as TextView
+    val name = itemView.findViewById(R.id.person_name) as TextView
+    val username = itemView.findViewById(R.id.person_username) as TextView
+    val text = itemView.findViewById(R.id.text) as TextView
+
     override fun bind(item: Comment) {
-        title.text = item.text
+        text.text = item.text
+        val person = item.person
+        if (person != null) {
+            initials.text = person.initials
+            name.text = person.name
+            username.text = "@${person.username}"
+        }
     }
 }
