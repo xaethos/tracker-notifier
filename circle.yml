@@ -14,7 +14,7 @@ test:
     #    parallel: true
 
     # assemble stuff while waiting for the emulator
-    - TERM=dumb ./gradlew testDebug assembleDebug -PpreDexLibraries=false
+    - TERM=dumb ./gradlew testDebug assembleDebug assembleRelease -PpreDexLibraries=false
 
     ## run tests  against the emulator.
     ## (maybe in the future. Right now CircleCI blows at instrumentation tests)
