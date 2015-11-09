@@ -15,6 +15,7 @@
     <string name="action_settings">Settings</string>
 
     <string name="headline_no_notifications">No unread notifications</string>
+    <string name="headline_no_comments">No comments</string>
     <string name="headline_error">Error</string>
 
     <string name="msg_pull_to_refresh">Pull to refresh</string>

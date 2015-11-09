@@ -54,6 +54,10 @@ abstract class BaseAdapterFragment : Fragment() {
         super.onDestroyView()
     }
 
+    open fun refresh() {
+        refreshView?.isRefreshing = false
+    }
+
     protected fun setEmptyText(headlineRes: Int, captionRes: Int) {
         headlineView?.setTextOrHide(headlineRes)
         captionView?.setTextOrHide(captionRes)
@@ -63,8 +67,6 @@ abstract class BaseAdapterFragment : Fragment() {
         headlineView?.setTextOrHide(headlineText)
         captionView?.setTextOrHide(captionText)
     }
-
-    abstract fun refresh()
 
     private fun adapterCountObservable() = Observable.create<Int> { subscriber ->
         val dataObserver = object : RecyclerView.AdapterDataObserver() {
