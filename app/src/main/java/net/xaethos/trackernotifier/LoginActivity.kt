@@ -7,7 +7,10 @@ import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.widget.EditText
 import android.widget.Toast
+import net.xaethos.quicker.cloud.MeApi
+import net.xaethos.quicker.cloud.interceptors.AuthInterceptor
 import net.xaethos.trackernotifier.api.TrackerClient
+import net.xaethos.trackernotifier.di.AppComponent
 import net.xaethos.trackernotifier.subscribers.toastError
 import net.xaethos.trackernotifier.utils.PreferencesManager
 import net.xaethos.trackernotifier.utils.login
@@ -15,24 +18,30 @@ import net.xaethos.trackernotifier.utils.switchVisible
 import rx.Subscription
 import rx.android.schedulers.AndroidSchedulers
 import rx.schedulers.Schedulers
+import javax.inject.Inject
 
 /**
  * A login screen that offers login via email/password.
  */
 class LoginActivity : Activity() {
 
+    @Inject lateinit var authenticator: AuthInterceptor
+    @Inject lateinit var meApi: MeApi
+
     /**
      * Keep track of the login task to ensure we can cancel it if requested.
      */
     private var loginSubscription: Subscription? = null
 
-    // UI references.
+    // UI references
     private lateinit var accountNameView: EditText
     private lateinit var passwordView: EditText
     private lateinit var progressView: View
     private lateinit var loginFormView: View
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        AppComponent.instance.inject(this)
+
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_login)
 
@@ -99,16 +108,16 @@ class LoginActivity : Activity() {
         showProgress(true)
 
         val prefs = PreferencesManager.getInstance(this)
-        val trackerClient = TrackerClient.instance
 
-        loginSubscription = trackerClient.me.login(accountName, password)
+        loginSubscription = meApi.login(accountName, password)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe({ user ->
                     Toast.makeText(this@LoginActivity,
                             "Welcome back " + user.name, Toast.LENGTH_LONG).show()
 
-                    trackerClient.setToken(user.api_token)
+                    TrackerClient.instance.setToken(user.api_token)
+                    authenticator.trackerToken = user.api_token
                     prefs.trackerToken = user.api_token
                     setResult(Activity.RESULT_OK)
                     finish()

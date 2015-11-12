@@ -35,8 +35,6 @@ import javax.inject.Singleton
 
     @Provides @Singleton fun provideAuthInterceptor() = AuthInterceptor()
 
-    @Provides @Singleton fun provideAuthenticator(authInterceptor: AuthInterceptor) = authInterceptor
-
     @Provides @Singleton fun provideMeApi(retrofit: Retrofit) = retrofit.create(MeApi::class.java)
 
 }

@@ -11,9 +11,17 @@ android {
     }
 }
 
+kapt {
+    generateStubs = true
+}
+
 dependencies {
     compile project(':common')
     compile project(':entities')
+
+    provided 'javax.annotation:jsr250-api:1.0'
+    kapt "com.google.dagger:dagger-compiler:${versions.dagger}"
+    compile "com.google.dagger:dagger:${versions.dagger}"
 
     compile "org.jetbrains.kotlin:kotlin-stdlib:${versions.kotlin}"
 
