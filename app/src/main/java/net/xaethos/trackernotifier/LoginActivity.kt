@@ -9,11 +9,11 @@ import android.widget.EditText
 import android.widget.Toast
 import net.xaethos.quicker.cloud.MeApi
 import net.xaethos.quicker.cloud.interceptors.AuthInterceptor
+import net.xaethos.quicker.cloud.login
 import net.xaethos.trackernotifier.api.TrackerClient
 import net.xaethos.trackernotifier.di.AppComponent
 import net.xaethos.trackernotifier.subscribers.toastError
 import net.xaethos.trackernotifier.utils.PreferencesManager
-import net.xaethos.trackernotifier.utils.login
 import net.xaethos.trackernotifier.utils.switchVisible
 import rx.Subscription
 import rx.android.schedulers.AndroidSchedulers
