@@ -1,5 +1,5 @@
 <manifest
-    package="net.xaethos.quicker.entities"
+    package="net.xaethos.quicker.cloud"
     xmlns:tools="http://schemas.android.com/tools">
 
     <application tools:ignore="AllowBackup" />

@@ -12,7 +12,16 @@ android {
 }
 
 dependencies {
+    compile project(':common')
+    compile project(':entities')
+
     compile "org.jetbrains.kotlin:kotlin-stdlib:${versions.kotlin}"
+
+    compile "io.reactivex:rxandroid:${versions.rx}"
+
+    compile "com.squareup.retrofit:retrofit:${versions.retrofit}"
+    compile "com.squareup.retrofit:adapter-rxjava:${versions.retrofit}"
+    compile "com.squareup.retrofit:converter-moshi:${versions.retrofit}"
 
     testCompile "junit:junit:${versions.junit}"
 }
