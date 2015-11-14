@@ -1,5 +1,5 @@
 package net.xaethos.quicker.cloud
 
-interface Authenticator {
-    var trackerToken: String?
+class Authenticator {
+    var trackerToken: String? = null
 }

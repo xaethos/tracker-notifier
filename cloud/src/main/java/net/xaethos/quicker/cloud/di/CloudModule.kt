@@ -3,8 +3,9 @@ package net.xaethos.quicker.cloud.di
 import com.squareup.okhttp.OkHttpClient
 import dagger.Module
 import dagger.Provides
+import net.xaethos.quicker.cloud.Authenticator
 import net.xaethos.quicker.cloud.MeApi
-import net.xaethos.quicker.cloud.interceptors.AuthInterceptor
+import net.xaethos.quicker.cloud.interceptors.TransformInterceptor
 import net.xaethos.quicker.cloud.interceptors.LoggingInterceptor
 import net.xaethos.quicker.common.Config
 import retrofit.MoshiConverterFactory
@@ -16,10 +17,10 @@ import javax.inject.Singleton
 
     @Provides @Singleton fun provideOkHttpClient(
             config: Config,
-            authInterceptor: AuthInterceptor): OkHttpClient {
+            authenticator: Authenticator): OkHttpClient {
         val client = OkHttpClient()
         if (config.isDebug) client.interceptors().add(LoggingInterceptor())
-        client.interceptors().add(0, authInterceptor)
+        client.interceptors().add(0, TransformInterceptor(authenticator))
         return client
     }
 
@@ -33,7 +34,7 @@ import javax.inject.Singleton
                     .addConverterFactory(MoshiConverterFactory.create())
                     .build()
 
-    @Provides @Singleton fun provideAuthInterceptor() = AuthInterceptor()
+    @Provides @Singleton fun provideAuthenticator() = Authenticator()
 
     @Provides @Singleton fun provideMeApi(retrofit: Retrofit) = retrofit.create(MeApi::class.java)
 

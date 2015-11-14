@@ -7,10 +7,9 @@ import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.widget.EditText
 import android.widget.Toast
+import net.xaethos.quicker.cloud.Authenticator
 import net.xaethos.quicker.cloud.MeApi
-import net.xaethos.quicker.cloud.interceptors.AuthInterceptor
 import net.xaethos.quicker.cloud.login
-import net.xaethos.trackernotifier.api.TrackerClient
 import net.xaethos.trackernotifier.di.AppComponent
 import net.xaethos.trackernotifier.subscribers.toastError
 import net.xaethos.trackernotifier.utils.PreferencesManager
@@ -25,7 +24,7 @@ import javax.inject.Inject
  */
 class LoginActivity : Activity() {
 
-    @Inject lateinit var authenticator: AuthInterceptor
+    @Inject lateinit var authenticator: Authenticator
     @Inject lateinit var meApi: MeApi
 
     /**
@@ -116,7 +115,6 @@ class LoginActivity : Activity() {
                     Toast.makeText(this@LoginActivity,
                             "Welcome back " + user.name, Toast.LENGTH_LONG).show()
 
-                    TrackerClient.instance.setToken(user.api_token)
                     authenticator.trackerToken = user.api_token
                     prefs.trackerToken = user.api_token
                     setResult(Activity.RESULT_OK)
